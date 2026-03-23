@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de Produtos - BookNexus</title>
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    /* ===== RESET ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+      display: flex;
+      background: #f4f9fb;
+      color: #333;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 260px;
+      height: 100vh;
+      background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+      position: fixed;
+      left: 0;
+      top: 0;
+      padding: 30px 0;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 40px;
+      font-size: 22px;
+      padding: 0 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding-bottom: 20px;
+    }
+
+    .sidebar a {
+      text-decoration: none;
+      color: white;
+      padding: 15px 25px;
+      font-size: 16px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: 0.3s;
+      border-left: 4px solid transparent;
+    }
+
+    .sidebar a i {
+      font-size: 20px;
+      width: 24px;
+    }
+
+    .sidebar a:hover {
+      background: rgba(255,255,255,0.1);
+      border-left-color: #26a69a;
+    }
+
+    .sidebar a.active {
+      background: rgba(255,255,255,0.15);
+      border-left-color: #26a69a;
+      font-weight: 600;
+    }
+
+    /* ===== CONTEÚDO ===== */
+    .content {
+      margin-left: 260px;
+      padding: 40px;
+      flex: 1;
+      min-height: 100vh;
+    }
+
+    /* ===== HEADER DA PÁGINA ===== */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      color: #1e3c72;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 15px;
+    }
+
+    /* ===== BOTÕES ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 30px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #1e88e5, #26a69a);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(30,136,229,0.3);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+      transform: translateY(-2px);
+    }
+
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 13px;
+      border-radius: 20px;
+    }
+
+    /* ===== BARRA DE PESQUISA ===== */
+    .search-bar {
+      background: white;
+      border-radius: 40px;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      max-width: 400px;
+      margin-bottom: 30px;
+    }
+
+    .search-bar input {
+      flex: 1;
+      border: none;
+      padding: 12px 20px;
+      font-size: 15px;
+      background: transparent;
+      outline: none;
+    }
+
+    .search-bar button {
+      background: #1e88e5;
+      border: none;
+      color: white;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .search-bar button:hover {
+      background: #1565c0;
+    }
+
+    /* ===== FILTROS ===== */
+    .filters-bar {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+
+    .filter-select {
+      padding: 10px 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 30px;
+      font-size: 14px;
+      background: white;
+      cursor: pointer;
+      outline: none;
+      min-width: 150px;
+    }
+
+    .filter-select:focus {
+      border-color: #1e88e5;
+    }
+
+    /* ===== TABELA ===== */
+    .table-container {
+      background: white;
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+      overflow-x: auto;
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      padding: 15px 10px;
+      font-weight: 600;
+      color: #1e3c72;
+      border-bottom: 2px solid #e0e0e0;
+      font-size: 15px;
+    }
+
+    td {
+      padding: 15px 10px;
+      border-bottom: 1px solid #f0f0f0;
+      color: #555;
+      vertical-align: middle;
+    }
+
+    tr:hover {
+      background: #f8f9fa;
+    }
+
+    /* Imagem do produto */
+    .product-image {
+      width: 50px;
+      height: 50px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+
+    .product-image i {
+      font-size: 24px;
+      color: #999;
+    }
+
+    /* Status do estoque */
+    .stock-status {
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .stock-high {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .stock-medium {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .stock-low {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    /* Preço */
+    .price {
+      font-weight: 600;
+      color: #2a5298;
+    }
+
+    /* Ações */
+    .actions-cell {
+      text-align: center;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .action-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+
+    .action-edit {
+      background: #e3f2fd;
+      color: #1e88e5;
+    }
+
+    .action-edit:hover {
+      background: #1e88e5;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(30,136,229,0.3);
+    }
+
+    .action-delete {
+      background: #fee;
+      color: #dc3545;
+    }
+
+    .action-delete:hover {
+      background: #dc3545;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(220,53,69,0.3);
+    }
+
+    /* Texto centralizado */
+    .text-center {
+      text-align: center;
+    }
+
+    /* ===== PAGINAÇÃO ===== */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    .page-link {
+      padding: 8px 15px;
+      border-radius: 8px;
+      background: white;
+      color: #1e3c72;
+      text-decoration: none;
+      transition: 0.3s;
+      border: 1px solid #e0e0e0;
+    }
+
+    .page-link:hover,
+    .page-link.active {
+      background: #1e88e5;
+      color: white;
+      border-color: #1e88e5;
+    }
+
+    /* ===== MENSAGEM DE BOAS-VINDAS ===== */
+    .welcome-message {
+      background: linear-gradient(135deg, #e3f2fd, #e0f2f1);
+      border-radius: 16px;
+      padding: 25px;
+      margin-bottom: 30px;
+      border-left: 5px solid #1e88e5;
+    }
+
+    .welcome-message h2 {
+      color: #1e3c72;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .welcome-message p {
+      margin-bottom: 0;
+      color: #2a5298;
+    }
+
+    /* ===== MENSAGENS DE RETORNO ===== */
+    .alert {
+      padding: 15px 20px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border-left: 4px solid #28a745;
+    }
+
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+      border-left: 4px solid #dc3545;
+    }
+
+    /* ===== BOTÃO VOLTAR ===== */
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 30px;
+      background: linear-gradient(135deg, #1e88e5, #26a69a);
+      color: white;
+      text-decoration: none;
+      transition: 0.3s;
+      border: none;
+      font-weight: 500;
+    }
+
+    .btn-back:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(30,136,229,0.3);
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+
+    .empty-state i {
+      font-size: 80px;
+      color: #ddd;
+      margin-bottom: 20px;
+    }
+
+    .empty-state p {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    /* ===== ACTION BAR ===== */
+    .action-bar {
+      display: flex;
+      gap: 15px;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 70px;
+        overflow: hidden;
+      }
+      .sidebar h2, .sidebar a span {
+        display: none;
+      }
+      .sidebar a {
+        justify-content: center;
+        padding: 20px 0;
+      }
+      .content {
+        margin-left: 70px;
+        padding: 20px;
+      }
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .action-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .btn-back {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <h2>📚 BookNexus</h2>
+
+  <a th:href="@{/admin}" class="sidebar-link">
+    <i class="bi bi-house-door-fill"></i>
+    <span>Início</span>
+  </a>
+
+  <a th:href="@{/admin/clientes}" class="sidebar-link">
+    <i class="bi bi-people-fill"></i>
+    <span>Clientes</span>
+  </a>
+
+  <a th:href="@{/admin/produtos}" class="sidebar-link active">
+    <i class="bi bi-box-seam"></i>
+    <span>Estoque</span>
+  </a>
+
+  <a th:href="@{/admin/pedidos}" class="sidebar-link">
+    <i class="bi bi-cart-fill"></i>
+    <span>Pedidos</span>
+  </a>
+
+  <a th:href="@{/admin/dashboard}" class="sidebar-link">
+    <i class="bi bi-speedometer2"></i>
+    <span>Dashboard</span>
+  </a>
+
+  <a th:href="@{/admin/log}" class="sidebar-link">
+    <i class="bi bi-file-text-fill"></i>
+    <span>Relatórios</span>
+  </a>
+
+  <a th:href="@{/admin}" style="margin-top: auto;">
+    <i class="bi bi-box-arrow-right"></i>
+    <span>Sair</span>
+  </a>
+</div>
+
+<!-- CONTEÚDO PRINCIPAL -->
+<div class="content">
+
+  <!-- MENSAGENS DE RETORNO -->
+  <div th:if="${mensagem}" class="alert alert-success">
+    <i class="bi bi-check-circle-fill"></i>
+    <span th:text="${mensagem}"></span>
+  </div>
+
+  <div th:if="${erro}" class="alert alert-error">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span th:text="${erro}"></span>
+  </div>
+
+  <!-- Mensagem de boas-vindas -->
+  <div class="welcome-message">
+    <h2><i class="bi bi-box-seam"></i> Gerenciar Estoque</h2>
+    <p>Gerencie todos os produtos da loja, adicione novos livros e controle o estoque.</p>
+  </div>
+
+  <!-- HEADER DA PÁGINA -->
+  <div class="page-header">
+    <h1>
+      <i class="bi bi-boxes"></i>
+      Lista de Produtos
+    </h1>
+
+    <div class="header-actions">
+      <a th:href="@{/admin/produtos/novo}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Novo Produto
+      </a>
+    </div>
+  </div>
+
+  <!-- BARRA DE PESQUISA (opcional - pode ser implementada depois) -->
+  <div class="search-bar">
+    <input type="text" placeholder="Buscar produtos... (em breve)">
+    <button type="button" disabled style="opacity: 0.5;">
+      <i class="bi bi-search"></i>
+    </button>
+  </div>
+
+  <!-- FILTROS (opcional) -->
+  <div class="filters-bar">
+    <select class="filter-select">
+      <option>Todas as categorias</option>
+      <option>Ficção</option>
+      <option>Clássicos</option>
+      <option>Científico</option>
+      <option>Infantil</option>
+    </select>
+    <select class="filter-select">
+      <option>Todos os status</option>
+      <option>Em estoque</option>
+      <option>Baixo estoque</option>
+      <option>Esgotado</option>
+    </select>
+  </div>
+
+  <!-- TABELA DE PRODUTOS -->
+  <div class="table-container">
+    <table>
+      <thead>
+      <tr>
+        <th class="text-center">ID</th>
+        <th class="text-center">Imagem</th>
+        <th>Título</th>
+        <th>Autor</th>
+        <th>Preço</th>
+        <th>Estoque</th>
+        <th>Categoria</th>
+        <th class="text-center">Ações</th>
+      </tr>
+      </thead>
+      <tbody>
+      <!-- Exemplo 1 -->
+      <tr>
+        <td class="text-center">1</td>
+        <td class="text-center">
+          <div class="product-image">
+            <i class="bi bi-image"></i>
+          </div>
+        </td>
+        <td><strong>O Senhor dos Anéis</strong></td>
+        <td>J.R.R. Tolkien</td>
+        <td class="price">R$ 89,90</td>
+        <td><span class="stock-status stock-high">32 em estoque</span></td>
+        <td>Ficção</td>
+        <td class="actions-cell">
+          <div class="action-buttons">
+            <a th:href="@{/admin/produtos/editar/1}" class="action-btn action-edit" title="Editar produto">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="#" onclick="return confirmarExclusao(1)" class="action-btn action-delete" title="Excluir produto">
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+        </td>
+      </tr>
+      <!-- Exemplo 2 -->
+      <tr>
+        <td class="text-center">2</td>
+        <td class="text-center">
+          <div class="product-image">
+            <i class="bi bi-image"></i>
+          </div>
+        </td>
+        <td><strong>1984</strong></td>
+        <td>George Orwell</td>
+        <td class="price">R$ 49,90</td>
+        <td><span class="stock-status stock-medium">15 em estoque</span></td>
+        <td>Ficção</td>
+        <td class="actions-cell">
+          <div class="action-buttons">
+            <a th:href="@{/admin/produtos/editar/2}" class="action-btn action-edit" title="Editar produto">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="#" onclick="return confirmarExclusao(2)" class="action-btn action-delete" title="Excluir produto">
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+        </td>
+      </tr>
+      <!-- Exemplo 3 -->
+      <tr>
+        <td class="text-center">3</td>
+        <td class="text-center">
+          <div class="product-image">
+            <i class="bi bi-image"></i>
+          </div>
+        </td>
+        <td><strong>Dom Casmurro</strong></td>
+        <td>Machado de Assis</td>
+        <td class="price">R$ 39,90</td>
+        <td><span class="stock-status stock-low">3 em estoque</span></td>
+        <td>Clássicos</td>
+        <td class="actions-cell">
+          <div class="action-buttons">
+            <a th:href="@{/admin/produtos/editar/3}" class="action-btn action-edit" title="Editar produto">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="#" onclick="return confirmarExclusao(3)" class="action-btn action-delete" title="Excluir produto">
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+        </td>
+      </tr>
+      <!-- Exemplo 4 -->
+      <tr>
+        <td class="text-center">4</td>
+        <td class="text-center">
+          <div class="product-image">
+            <i class="bi bi-image"></i>
+          </div>
+        </td>
+        <td><strong>Introdução à Programação</strong></td>
+        <td>João Silva</td>
+        <td class="price">R$ 129,90</td>
+        <td><span class="stock-status stock-high">45 em estoque</span></td>
+        <td>Científico</td>
+        <td class="actions-cell">
+          <div class="action-buttons">
+            <a th:href="@{/admin/produtos/editar/4}" class="action-btn action-edit" title="Editar produto">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="#" onclick="return confirmarExclusao(4)" class="action-btn action-delete" title="Excluir produto">
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+        </td>
+      </tr>
+      <!-- Exemplo 5 -->
+      <tr>
+        <td class="text-center">5</td>
+        <td class="text-center">
+          <div class="product-image">
+            <i class="bi bi-image"></i>
+          </div>
+        </td>
+        <td><strong>Diário de um Banana</strong></td>
+        <td>Jeff Kinney</td>
+        <td class="price">R$ 54,90</td>
+        <td><span class="stock-status stock-low">2 em estoque</span></td>
+        <td>Infantil</td>
+        <td class="actions-cell">
+          <div class="action-buttons">
+            <a th:href="@{/admin/produtos/editar/5}" class="action-btn action-edit" title="Editar produto">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="#" onclick="return confirmarExclusao(5)" class="action-btn action-delete" title="Excluir produto">
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINAÇÃO -->
+  <div class="pagination">
+    <a href="#" class="page-link active">1</a>
+    <a href="#" class="page-link">2</a>
+    <a href="#" class="page-link">3</a>
+    <a href="#" class="page-link">4</a>
+    <a href="#" class="page-link">5</a>
+  </div>
+
+  <!-- BARRA DE AÇÕES -->
+  <div class="action-bar">
+    <a th:href="@{/admin/produtos/novo}" class="btn btn-primary">
+      <i class="bi bi-plus-circle"></i> Novo Produto
+    </a>
+
+    <a th:href="@{/admin}" class="btn-back">
+      <i class="bi bi-arrow-left"></i>
+      Voltar ao Painel
+    </a>
+  </div>
+
+</div>
+
+<!-- Scripts -->
+<script>
+  // Função para confirmar exclusão
+  function confirmarExclusao(id) {
+    if (confirm('Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.')) {
+      window.location.href = '/admin/produtos/excluir/' + id;
+    }
+    return false;
+  }
+
+  // Marcar link ativo na sidebar baseado na URL atual
+  document.addEventListener('DOMContentLoaded', function() {
+    const currentPath = window.location.pathname;
+
+    document.querySelectorAll('.sidebar .sidebar-link').forEach(link => {
+      const href = link.getAttribute('href');
+
+      if (href) {
+        // Remove active de todos
+        link.classList.remove('active');
+
+        // Adiciona active se a URL atual começa com o href
+        if (currentPath.startsWith(href) && href !== '/admin') {
+          link.classList.add('active');
+        } else if (href === '/admin' && (currentPath === '/admin' || currentPath === '/admin/')) {
+          link.classList.add('active');
+        }
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

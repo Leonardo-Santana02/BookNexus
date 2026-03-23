@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Pagamento - BookNexus</title>
+
+    <!-- Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- jQuery e Mask para máscaras -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
+    <style>
+        /* ===== RESET ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+            background: #f4f9fb;
+            color: #333;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: linear-gradient(90deg, #1e88e5, #26a69a);
+            padding: 15px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 28px;
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 500px;
+            margin: 0 30px;
+        }
+
+        .search-bar form {
+            display: flex;
+            background: white;
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .search-bar button {
+            background: white;
+            border: none;
+            padding: 0 20px;
+            color: #1e88e5;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 18px;
+        }
+
+        .search-bar button:hover {
+            background: #f0f0f0;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .header-actions a {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+            position: relative;
+        }
+
+        .header-actions a:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #e53935;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
+        }
+
+        /* ===== BREADCRUMB ===== */
+        .breadcrumb {
+            padding: 20px 40px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .breadcrumb a {
+            color: #1e88e5;
+            text-decoration: none;
+        }
+
+        .breadcrumb span {
+            color: #666;
+        }
+
+        .breadcrumb i {
+            margin: 0 10px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        /* ===== HERO SECTION ===== */
+        .page-hero {
+            background: linear-gradient(135deg, #2a5298, #1e90ff);
+            color: white;
+            padding: 50px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            transform: rotate(30deg);
+        }
+
+        .page-hero h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .page-hero h1 i {
+            font-size: 38px;
+            opacity: 0.9;
+        }
+
+        .page-hero p {
+            font-size: 16px;
+            opacity: 0.95;
+            position: relative;
+        }
+
+        /* ===== CONTEÚDO PRINCIPAL ===== */
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        /* ===== PROGRESSO DO CHECKOUT ===== */
+        .checkout-progress {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #999;
+        }
+
+        .progress-step.active {
+            color: #1e88e5;
+        }
+
+        .progress-step.completed {
+            color: #26a69a;
+        }
+
+        .step-number {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .progress-step.active .step-number {
+            background: #1e88e5;
+            color: white;
+        }
+
+        .progress-step.completed .step-number {
+            background: #26a69a;
+            color: white;
+        }
+
+        .step-line {
+            width: 60px;
+            height: 2px;
+            background: #e0e0e0;
+        }
+
+        /* ===== GRID DE PAGAMENTO ===== */
+        .payment-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        /* ===== MÉTODOS DE PAGAMENTO ===== */
+        .payment-methods {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            color: #1e3c72;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eef2f6;
+        }
+
+        .section-title i {
+            color: #1e88e5;
+        }
+
+        .method-tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .method-tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px;
+            border: 2px solid #e0e7ff;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: center;
+        }
+
+        .method-tab:hover {
+            border-color: #1e88e5;
+            transform: translateY(-2px);
+        }
+
+        .method-tab.active {
+            border-color: #1e88e5;
+            background: #e3f2fd;
+        }
+
+        .method-tab i {
+            font-size: 24px;
+            color: #1e88e5;
+            margin-bottom: 8px;
+        }
+
+        .method-tab span {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* ===== FORMULÁRIO DE CARTÃO ===== */
+        .card-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .form-group label i {
+            color: #1e88e5;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px 15px;
+            border: 2px solid #e0e7ff;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: 0.3s;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #1e88e5;
+            box-shadow: 0 0 0 3px rgba(30,136,229,0.1);
+        }
+
+        .form-group input.error {
+            border-color: #e53935;
+        }
+
+        .input-icon {
+            position: relative;
+        }
+
+        .input-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        .input-icon input {
+            padding-left: 45px;
+        }
+
+        .card-flags {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .card-flag {
+            padding: 5px 10px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .card-flag i {
+            color: #1e88e5;
+        }
+
+        /* ===== PIX ===== */
+        .pix-section {
+            text-align: center;
+            padding: 30px;
+            background: #f8faff;
+            border-radius: 16px;
+        }
+
+        .pix-qrcode {
+            width: 200px;
+            height: 200px;
+            background: white;
+            margin: 20px auto;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #1e88e5;
+        }
+
+        .pix-qrcode i {
+            font-size: 80px;
+            color: #1e88e5;
+            opacity: 0.5;
+        }
+
+        .pix-key {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid #e0e7ff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+
+        .pix-key span {
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .pix-key button {
+            padding: 8px 15px;
+            background: #1e88e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .pix-key button:hover {
+            background: #1565c0;
+        }
+
+        /* ===== BOLETO ===== */
+        .boleto-section {
+            text-align: center;
+            padding: 40px;
+            background: #f8faff;
+            border-radius: 16px;
+        }
+
+        .boleto-info {
+            margin: 25px 0;
+        }
+
+        .boleto-info p {
+            color: #666;
+            margin: 10px 0;
+        }
+
+        /* ===== RESUMO DO PEDIDO ===== */
+        .order-summary {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .summary-title {
+            font-size: 20px;
+            color: #1e3c72;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eef2f6;
+        }
+
+        .summary-items {
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .summary-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid #eef2f6;
+        }
+
+        .item-image {
+            width: 50px;
+            height: 70px;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e88e5;
+            font-size: 24px;
+        }
+
+        .item-details {
+            flex: 1;
+        }
+
+        .item-details h4 {
+            color: #1e3c72;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+
+        .item-details p {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .item-price {
+            font-weight: 600;
+            color: #26a69a;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            color: #555;
+        }
+
+        .summary-row.total {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #eef2f6;
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e3c72;
+        }
+
+        .summary-row.frete {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .summary-row.frete i {
+            color: #1e88e5;
+        }
+
+        .summary-row.frete.free {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        /* ===== BOTÕES ===== */
+        .btn {
+            padding: 14px 30px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e88e5, #26a69a);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(30,136,229,0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #1e88e5;
+            border: 2px solid #1e88e5;
+        }
+
+        .btn-secondary:hover {
+            background: #1e88e5;
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+
+        .btn-outline:hover {
+            background: #f5f5f5;
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        /* ===== CHECKBOX TERMOS ===== */
+        .terms-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .terms-checkbox input {
+            width: 18px;
+            height: 18px;
+        }
+
+        .terms-checkbox a {
+            color: #1e88e5;
+            text-decoration: none;
+        }
+
+        .terms-checkbox a:hover {
+            text-decoration: underline;
+        }
+
+        /* ===== MENSAGENS ===== */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        /* ===== SEGURANÇA ===== */
+        .security-badge {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #f8faff;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .security-badge i {
+            font-size: 30px;
+            color: #26a69a;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: #1e3c72;
+            color: white;
+            padding: 40px 40px 20px;
+            margin-top: 60px;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px 20px;
+            }
+
+            .search-bar {
+                max-width: 100%;
+                margin: 10px 0;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .payment-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .checkout-progress {
+                gap: 10px;
+            }
+
+            .step-line {
+                width: 30px;
+            }
+
+            .method-tabs {
+                flex-direction: column;
+            }
+
+            .action-bar {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER (sem navbar) -->
+<header class="header">
+    <div class="logo">
+        <a href="/home">
+            <i class="fa-solid fa-book-open"></i>
+            BookNexus
+        </a>
+    </div>
+
+    <div class="search-bar">
+        <form action="/buscar" method="get">
+            <input type="text" name="q" placeholder="Buscar livros...">
+            <button type="submit">
+                <i class="fa-solid fa-search"></i>
+            </button>
+        </form>
+    </div>
+
+    <div class="header-actions">
+        <a href="/carrinho" class="carrinho-link" title="Carrinho">
+            <i class="fa-solid fa-cart-shopping fa-xl"></i>
+            <span class="cart-badge" th:if="${carrinhoQuantidade > 0}" th:text="${carrinhoQuantidade}">3</span>
+        </a>
+
+        <a href="/minha-conta" class="profile-link" title="Minha Conta">
+            <i class="fa-solid fa-circle-user fa-2xl"></i>
+        </a>
+    </div>
+</header>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+    <a href="/home">Home</a> <i class="fa-solid fa-chevron-right"></i>
+    <a href="/carrinho">Carrinho</a> <i class="fa-solid fa-chevron-right"></i>
+    <span>Pagamento</span>
+</div>
+
+<!-- HERO SECTION -->
+<section class="page-hero">
+    <h1>
+        <i class="fa-solid fa-credit-card"></i>
+        Finalizar Compra
+    </h1>
+    <p>Escolha a forma de pagamento e conclua seu pedido</p>
+</section>
+
+<!-- CONTEÚDO PRINCIPAL -->
+<div class="content">
+
+    <!-- MENSAGENS -->
+    <div th:if="${mensagem}" class="alert alert-success">
+        <i class="fa-solid fa-check-circle"></i>
+        <span th:text="${mensagem}"></span>
+    </div>
+
+    <div th:if="${erro}" class="alert alert-error">
+        <i class="fa-solid fa-exclamation-circle"></i>
+        <span th:text="${erro}"></span>
+    </div>
+
+    <!-- PROGRESSO DO CHECKOUT -->
+    <div class="checkout-progress">
+        <div class="progress-step completed">
+            <span class="step-number">1</span>
+            <span>Carrinho</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="progress-step active">
+            <span class="step-number">2</span>
+            <span>Pagamento</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="progress-step">
+            <span class="step-number">3</span>
+            <span>Confirmação</span>
+        </div>
+    </div>
+
+    <!-- GRID DE PAGAMENTO -->
+    <div class="payment-grid">
+
+        <!-- COLUNA ESQUERDA - FORMAS DE PAGAMENTO -->
+        <div>
+
+            <!-- MÉTODOS DE PAGAMENTO -->
+            <div class="payment-methods">
+                <h3 class="section-title">
+                    <i class="fa-regular fa-credit-card"></i>
+                    Forma de Pagamento
+                </h3>
+
+                <!-- TABS DE MÉTODOS -->
+                <div class="method-tabs">
+                    <div class="method-tab active" onclick="selecionarMetodo('cartao')">
+                        <i class="fa-regular fa-credit-card"></i>
+                        <span>Cartão de Crédito</span>
+                    </div>
+                    <div class="method-tab" onclick="selecionarMetodo('pix')">
+                        <i class="fa-brands fa-pix"></i>
+                        <span>PIX</span>
+                    </div>
+                    <div class="method-tab" onclick="selecionarMetodo('boleto')">
+                        <i class="fa-solid fa-barcode"></i>
+                        <span>Boleto</span>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO CARTÃO DE CRÉDITO -->
+                <div id="cartao-section" class="card-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fa-regular fa-credit-card"></i> Número do Cartão</label>
+                            <input type="text" id="cartaoNumero" class="cartao-numero" placeholder="0000 0000 0000 0000" value="4532 1234 5678 9012">
+                            <div class="card-flags">
+                                <span class="card-flag"><i class="fa-brands fa-cc-visa"></i> Visa</span>
+                                <span class="card-flag"><i class="fa-brands fa-cc-mastercard"></i> Master</span>
+                                <span class="card-flag"><i class="fa-brands fa-cc-amex"></i> Amex</span>
+                                <span class="card-flag"><i class="fa-brands fa-cc-elo"></i> Elo</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fa-regular fa-user"></i> Nome Impresso</label>
+                            <input type="text" id="cartaoNome" placeholder="Como está no cartão" value="LEONARDO SANTANA">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fa-regular fa-calendar"></i> Validade</label>
+                            <input type="text" id="cartaoValidade" class="validade" placeholder="MM/AA" value="12/25">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-regular fa-lock"></i> CVV</label>
+                            <input type="text" id="cartaoCvv" class="cvv" placeholder="123" maxlength="3" value="123">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fa-regular fa-address-card"></i> CPF do Titular</label>
+                            <input type="text" id="cartaoCpf" class="cpf" placeholder="000.000.000-00" value="123.456.789-00">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-regular fa-calendar"></i> Data Nascimento</label>
+                            <input type="date" id="cartaoDataNasc" value="1990-01-01">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fa-regular fa-credit-card"></i> Parcelamento</label>
+                            <select id="parcelamento">
+                                <option>1x de R$ 359,60 (sem juros)</option>
+                                <option>2x de R$ 179,80 (sem juros)</option>
+                                <option>3x de R$ 119,87 (sem juros)</option>
+                                <option>4x de R$ 93,90 (com juros)</option>
+                                <option>5x de R$ 76,72 (com juros)</option>
+                                <option>6x de R$ 65,42 (com juros)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO PIX (inicialmente oculta) -->
+                <div id="pix-section" style="display: none;">
+                    <div class="pix-section">
+                        <i class="fa-brands fa-pix" style="font-size: 60px; color: #1e88e5; margin-bottom: 20px;"></i>
+                        <h3 style="margin-bottom: 15px;">Pagamento via PIX</h3>
+                        <p style="color: #666; margin-bottom: 20px;">Escaneie o QR Code ou copie a chave PIX para pagar</p>
+
+                        <div class="pix-qrcode">
+                            <i class="fa-solid fa-qrcode"></i>
+                        </div>
+
+                        <div class="pix-key">
+                            <span>00020126580014br.gov.bcb.pix0136c56c5e...</span>
+                            <button onclick="copiarPix()">Copiar</button>
+                        </div>
+
+                        <p style="font-size: 13px; color: #999; margin-top: 15px;">
+                            <i class="fa-regular fa-clock"></i> O PIX será confirmado em até 30 segundos
+                        </p>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO BOLETO (inicialmente oculta) -->
+                <div id="boleto-section" style="display: none;">
+                    <div class="boleto-section">
+                        <i class="fa-solid fa-barcode" style="font-size: 60px; color: #1e88e5; margin-bottom: 20px;"></i>
+                        <h3 style="margin-bottom: 15px;">Boleto Bancário</h3>
+                        <div class="boleto-info">
+                            <p>Valor: <strong>R$ 359,60</strong></p>
+                            <p>Vencimento: 25/02/2024</p>
+                            <p style="font-size: 13px;">O boleto pode ser pago em qualquer banco, casa lotérica ou internet banking</p>
+                        </div>
+                        <button class="btn btn-primary" style="width: auto; padding: 12px 30px;" onclick="gerarBoleto()">
+                            <i class="fa-solid fa-download"></i> Gerar Boleto
+                        </button>
+                    </div>
+                </div>
+
+                <!-- BOTÃO DE FINALIZAÇÃO -->
+                <button class="btn btn-primary" style="margin-top: 25px;" onclick="finalizarCompra()">
+                    <i class="fa-solid fa-lock"></i> Finalizar Compra
+                </button>
+            </div>
+
+            <!-- SELO DE SEGURANÇA -->
+            <div class="security-badge">
+                <i class="fa-solid fa-shield-halved"></i>
+                <div>
+                    <strong>Compra segura</strong><br>
+                    Seus dados estão protegidos com criptografia SSL
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUNA DIREITA - RESUMO DO PEDIDO -->
+        <div class="order-summary">
+            <h3 class="summary-title">
+                <i class="fa-regular fa-receipt"></i>
+                Resumo do Pedido
+            </h3>
+
+            <div class="summary-items">
+                <!-- ITEM 1 -->
+                <div class="summary-item">
+                    <div class="item-image">
+                        <i class="fa-solid fa-book"></i>
+                    </div>
+                    <div class="item-details">
+                        <h4>Clean Code</h4>
+                        <p>Robert C. Martin • 1 unid.</p>
+                        <span class="item-price">R$ 79,90</span>
+                    </div>
+                </div>
+
+                <!-- ITEM 2 -->
+                <div class="summary-item">
+                    <div class="item-image">
+                        <i class="fa-solid fa-book"></i>
+                    </div>
+                    <div class="item-details">
+                        <h4>Arquitetura Limpa</h4>
+                        <p>Robert C. Martin • 2 unid.</p>
+                        <span class="item-price">R$ 179,80</span>
+                    </div>
+                </div>
+
+                <!-- ITEM 3 -->
+                <div class="summary-item">
+                    <div class="item-image">
+                        <i class="fa-solid fa-book"></i>
+                    </div>
+                    <div class="item-details">
+                        <h4>Domain Driven Design</h4>
+                        <p>Eric Evans • 1 unid.</p>
+                        <span class="item-price">R$ 99,90</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-row">
+                <span>Subtotal:</span>
+                <span>R$ 359,60</span>
+            </div>
+
+            <div class="summary-row frete free">
+                <span><i class="fa-solid fa-truck"></i> Frete:</span>
+                <span>Grátis</span>
+            </div>
+
+            <div class="summary-row">
+                <span>Desconto:</span>
+                <span>- R$ 0,00</span>
+            </div>
+
+            <div class="summary-row total">
+                <span>Total:</span>
+                <span>R$ 359,60</span>
+            </div>
+
+            <div style="font-size: 13px; color: #999; margin-top: 15px;">
+                <i class="fa-regular fa-clock"></i> Em até 6x sem juros
+            </div>
+        </div>
+    </div>
+
+    <!-- TERMOS E CONDIÇÕES -->
+    <div style="max-width: 800px; margin: 30px auto; text-align: center;">
+        <label class="terms-checkbox">
+            <input type="checkbox" id="termos" checked>
+            <span>Li e concordo com os <a href="/termos">Termos e Condições</a> e a <a href="/privacidade">Política de Privacidade</a></span>
+        </label>
+    </div>
+
+    <!-- BOTÕES DE AÇÃO -->
+    <div class="action-bar">
+        <a href="/carrinho" class="btn btn-outline">
+            <i class="fa-solid fa-arrow-left"></i> Voltar ao Carrinho
+        </a>
+        <a href="/home" class="btn btn-secondary">
+            <i class="fa-solid fa-store"></i> Continuar Comprando
+        </a>
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer-bottom">
+        <p>© 2024 BookNexus. Todos os direitos reservados.</p>
+        <p style="margin-top: 10px;">
+            <i class="fa-brands fa-cc-visa"></i>
+            <i class="fa-brands fa-cc-mastercard"></i>
+            <i class="fa-brands fa-cc-amex"></i>
+            <i class="fa-brands fa-cc-elo"></i>
+            <i class="fa-brands fa-pix"></i>
+            <i class="fa-solid fa-barcode"></i>
+        </p>
+    </div>
+</footer>
+
+<!-- SCRIPTS -->
+<script th:inline="javascript">
+    $(document).ready(function() {
+        // Máscaras
+        $('.cartao-numero').mask('0000 0000 0000 0000');
+        $('.validade').mask('00/00');
+        $('.cvv').mask('000');
+        $('.cpf').mask('000.000.000-00');
+
+        // Badge do carrinho
+        const cartBadge = document.querySelector('.cart-badge');
+        if (cartBadge && cartBadge.textContent === '0') {
+            cartBadge.style.display = 'none';
+        }
+    });
+
+    // Selecionar método de pagamento
+    function selecionarMetodo(metodo) {
+        // Atualizar tabs
+        document.querySelectorAll('.method-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        event.currentTarget.classList.add('active');
+
+        // Mostrar seção correspondente
+        document.getElementById('cartao-section').style.display = metodo === 'cartao' ? 'block' : 'none';
+        document.getElementById('pix-section').style.display = metodo === 'pix' ? 'block' : 'none';
+        document.getElementById('boleto-section').style.display = metodo === 'boleto' ? 'block' : 'none';
+    }
+
+    // Copiar chave PIX
+    function copiarPix() {
+        navigator.clipboard.writeText('00020126580014br.gov.bcb.pix0136c56c5e...');
+        alert('Chave PIX copiada!');
+    }
+
+    // Gerar boleto
+    function gerarBoleto() {
+        window.location.href = '/boleto/gerar';
+    }
+
+    // Finalizar compra
+    function finalizarCompra() {
+        const termos = document.getElementById('termos').checked;
+
+        if (!termos) {
+            alert('Você deve aceitar os termos para continuar');
+            return;
+        }
+
+        // Validar método selecionado
+        const metodoAtivo = document.querySelector('.method-tab.active span').textContent;
+
+        if (metodoAtivo === 'Cartão de Crédito') {
+            // Validar campos do cartão
+            const numero = document.getElementById('cartaoNumero').value;
+            const nome = document.getElementById('cartaoNome').value;
+            const validade = document.getElementById('cartaoValidade').value;
+            const cvv = document.getElementById('cartaoCvv').value;
+
+            if (!numero || !nome || !validade || !cvv) {
+                alert('Preencha todos os dados do cartão');
+                return;
+            }
+        }
+
+        // Aqui você faria a chamada AJAX para processar o pagamento
+        console.log('Processando pagamento...');
+        window.location.href = '/pedido/confirmacao';
+    }
+</script>
+
+</body>
+</html>

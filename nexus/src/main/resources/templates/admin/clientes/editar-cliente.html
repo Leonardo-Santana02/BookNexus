@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="${cliente != null} ? 'Editar Cliente - ' + ${cliente.nome} : 'Editar Cliente - BookNexus'">Editar Cliente - BookNexus</title>
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Bootstrap CSS para componentes adicionais -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- jQuery e Mask para máscaras -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
+  <style>
+    /* ===== RESET ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+      display: flex;
+      background: #f4f9fb;
+      color: #333;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 260px;
+      height: 100vh;
+      background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+      position: fixed;
+      left: 0;
+      top: 0;
+      padding: 30px 0;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 40px;
+      font-size: 22px;
+      padding: 0 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding-bottom: 20px;
+    }
+
+    .sidebar a {
+      text-decoration: none;
+      color: white;
+      padding: 15px 25px;
+      font-size: 16px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: 0.3s;
+      border-left: 4px solid transparent;
+    }
+
+    .sidebar a i {
+      font-size: 20px;
+      width: 24px;
+    }
+
+    .sidebar a:hover {
+      background: rgba(255,255,255,0.1);
+      border-left-color: #26a69a;
+    }
+
+    .sidebar a.active {
+      background: rgba(255,255,255,0.15);
+      border-left-color: #26a69a;
+      font-weight: 600;
+    }
+
+    /* ===== CONTEÚDO ===== */
+    .content {
+      margin-left: 260px;
+      padding: 40px;
+      flex: 1;
+      min-height: 100vh;
+      width: calc(100% - 260px);
+    }
+
+    .content h1 {
+      font-size: 32px;
+      margin-bottom: 30px;
+      color: #1e3c72;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ===== FORMULÁRIO ===== */
+    .form-container {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+      margin-bottom: 30px;
+    }
+
+    .form-section {
+      margin-bottom: 40px;
+      padding-bottom: 30px;
+      border-bottom: 2px solid #eef2f6;
+    }
+
+    .form-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .form-section h3 {
+      color: #1e3c72;
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 25px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .form-section h3 i {
+      color: #1e88e5;
+      font-size: 24px;
+    }
+
+    /* ===== GRIDS DO FORMULÁRIO ===== */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-grid input,
+    .form-grid select,
+    .form-grid textarea {
+      padding: 12px 15px;
+      border: 2px solid #e0e7ff;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: 0.3s;
+      background: white;
+      width: 100%;
+    }
+
+    .form-grid input:focus,
+    .form-grid select:focus,
+    .form-grid textarea:focus {
+      outline: none;
+      border-color: #1e88e5;
+      box-shadow: 0 0 0 3px rgba(30,136,229,0.1);
+    }
+
+    /* ===== BLOCOS DE ENDEREÇOS/TELEFONES/CARTÕES ===== */
+    .endereco-bloco,
+    .telefone-bloco,
+    .cartao-bloco {
+      background: #f8faff;
+      border: 2px solid #e0e7ff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      position: relative;
+      transition: 0.3s;
+    }
+
+    .endereco-bloco:hover,
+    .telefone-bloco:hover,
+    .cartao-bloco:hover {
+      border-color: #1e88e5;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    /* ===== BOTÃO REMOVER ===== */
+    .btn-remove {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #ffebee;
+      color: #e53935;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 18px;
+      z-index: 10;
+    }
+
+    .btn-remove:hover {
+      background: #e53935;
+      color: white;
+      transform: scale(1.1);
+    }
+
+    /* ===== CHECKBOX GROUP ===== */
+    .checkbox-group {
+      display: flex;
+      gap: 20px;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #eef2f6;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #555;
+      cursor: pointer;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    /* ===== BOTÕES DE ADICIONAR ===== */
+    .btn-add {
+      background: linear-gradient(135deg, #26a69a, #1e88e5);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: 0.3s;
+      margin-top: 10px;
+    }
+
+    .btn-add:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(38,166,154,0.3);
+    }
+
+    .btn-add i {
+      font-size: 16px;
+    }
+
+    /* ===== BOTÕES DE AÇÃO ===== */
+    .form-actions {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #eef2f6;
+    }
+
+    .btn {
+      padding: 12px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #1e88e5, #26a69a);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(30,136,229,0.3);
+    }
+
+    .btn-secondary {
+      background: #f8f9fa;
+      color: #555;
+      border: 2px solid #e0e7ff;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e7ff;
+      transform: translateY(-2px);
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 30px;
+      background: linear-gradient(135deg, #1e88e5, #26a69a);
+      color: white;
+      text-decoration: none;
+      transition: 0.3s;
+      border: none;
+      font-weight: 500;
+    }
+
+    .btn-back:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(30,136,229,0.3);
+    }
+
+    /* ===== VALIDAÇÃO ===== */
+    .invalid-feedback {
+      color: #e53935;
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+
+    .is-invalid {
+      border-color: #e53935 !important;
+    }
+
+    .is-invalid:focus {
+      box-shadow: 0 0 0 3px rgba(229,57,53,0.1) !important;
+    }
+
+    /* ===== ALERTAS ===== */
+    .alert {
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .alert-danger {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .alert-info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    }
+
+    .empty-state i {
+      font-size: 64px;
+      color: #ccc;
+      margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .empty-state p {
+      color: #999;
+      margin-bottom: 20px;
+    }
+
+    /* ===== LOADING SPINNER ===== */
+    .spinner {
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 70px;
+        overflow: hidden;
+      }
+      .sidebar h2, .sidebar a span {
+        display: none;
+      }
+      .sidebar a {
+        justify-content: center;
+        padding: 20px 0;
+      }
+      .sidebar a i {
+        margin: 0;
+      }
+      .content {
+        margin-left: 70px;
+        padding: 20px;
+        width: calc(100% - 70px);
+      }
+      .form-actions {
+        flex-direction: column;
+      }
+      .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      .checkbox-group {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <h2>📚 BookNexus</h2>
+
+  <a th:href="@{/admin}">
+    <i class="bi bi-house-door-fill"></i>
+    <span>Início</span>
+  </a>
+
+  <a th:href="@{/admin/clientes}" class="active">
+    <i class="bi bi-people-fill"></i>
+    <span>Clientes</span>
+  </a>
+
+  <a th:href="@{/admin/produtos}">
+    <i class="bi bi-box-seam"></i>
+    <span>Estoque</span>
+  </a>
+
+  <a th:href="@{/admin/pedidos}">
+    <i class="bi bi-cart-fill"></i>
+    <span>Pedidos</span>
+  </a>
+
+  <a th:href="@{/admin/dashboard}">
+    <i class="bi bi-speedometer2"></i>
+    <span>Dashboard</span>
+  </a>
+
+  <a th:href="@{/admin/log}">
+    <i class="bi bi-file-text-fill"></i>
+    <span>Relatórios</span>
+  </a>
+
+  <a th:href="@{/admin}" style="margin-top: auto;">
+    <i class="bi bi-box-arrow-right"></i>
+    <span>Sair</span>
+  </a>
+</div>
+
+<!-- CONTEÚDO PRINCIPAL -->
+<div class="content">
+
+  <!-- Verifica se o cliente existe -->
+  <div th:if="${cliente == null}">
+    <div class="empty-state">
+      <i class="bi bi-exclamation-triangle"></i>
+      <h3>Cliente não encontrado</h3>
+      <p>O cliente que você está tentando editar não existe ou foi removido.</p>
+      <a th:href="@{/admin/clientes}" class="btn btn-primary">
+        <i class="bi bi-arrow-left"></i> Voltar para Lista
+      </a>
+    </div>
+  </div>
+
+  <!-- Exibe o formulário de edição -->
+  <div th:if="${cliente != null}">
+    <!-- TÍTULO -->
+    <h1>
+      <i class="bi bi-pencil-square"></i>
+      <span th:text="'Editar Cliente: ' + ${cliente.nome}">Editar Cliente</span>
+    </h1>
+
+    <!-- MENSAGENS -->
+    <div th:if="${mensagem}" class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="bi bi-check-circle-fill"></i>
+      <span th:text="${mensagem}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div th:if="${erro}" class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span th:text="${erro}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="form-container">
+      <!-- FORMULÁRIO - Usando o mesmo endpoint /salvar com ID -->
+      <form th:action="@{/admin/clientes/salvar}" method="post" id="clienteForm">
+
+        <!-- Campo hidden para o ID -->
+        <input type="hidden" name="id" th:value="${cliente.id}" />
+
+        <!-- DADOS PESSOAIS -->
+        <div class="form-section">
+          <h3><i class="bi bi-person-circle"></i> Dados Pessoais</h3>
+
+          <div class="form-grid">
+            <input type="text" name="nome" th:value="${cliente.nome}" placeholder="Nome Completo" required>
+            <input type="email" name="email" th:value="${cliente.email}" placeholder="Email" required>
+            <input type="text" name="cpf" th:value="${cliente.cpf}" placeholder="CPF" class="cpf" required>
+            <input type="date" name="dataNascimento" th:value="${cliente.dataNascimento}" required>
+
+            <select name="genero" required>
+              <option value="MASCULINO" th:selected="${cliente.genero != null and cliente.genero.name() == 'MASCULINO'}">Masculino</option>
+              <option value="FEMININO" th:selected="${cliente.genero != null and cliente.genero.name() == 'FEMININO'}">Feminino</option>
+              <option value="OUTRO" th:selected="${cliente.genero != null and cliente.genero.name() == 'OUTRO'}">Outro</option>
+            </select>
+
+            <select name="inativado">
+              <option value="false" th:selected="${!cliente.inativado}">Ativo</option>
+              <option value="true" th:selected="${cliente.inativado}">Inativo</option>
+            </select>
+          </div>
+
+          <!-- SENHA (opcional na edição) -->
+          <div class="form-grid" style="margin-top: 20px;">
+            <div>
+              <label><i class="bi bi-lock"></i> Nova Senha (deixe em branco para manter)</label>
+              <input type="password" name="senha" placeholder="Digite a nova senha" minlength="6" class="form-control">
+            </div>
+            <div>
+              <label><i class="bi bi-lock"></i> Confirmar Nova Senha</label>
+              <input type="password" name="confirmarSenha" placeholder="Confirme a nova senha" class="form-control">
+            </div>
+          </div>
+        </div>
+
+        <!-- ENDEREÇOS - CORRIGIDO -->
+        <div class="form-section">
+          <h3><i class="bi bi-geo-alt"></i> Endereços</h3>
+
+          <div id="enderecos-container">
+            <div th:each="endereco, iterStat : ${cliente.enderecos}" class="endereco-bloco">
+              <button type="button" class="btn-remove" onclick="removerItem(this, 'endereco')">
+                <i class="bi bi-x"></i>
+              </button>
+
+              <!-- Campos hidden para controle -->
+              <input type="hidden" th:name="'enderecos[' + ${iterStat.index} + '].id'" th:value="${endereco.id}" />
+
+              <div class="form-grid">
+                <!-- TIPO LOGRADOURO - CORRIGIDO -->
+                <select th:name="'enderecos[' + ${iterStat.index} + '].tipoLogradouro'" required>
+                  <option value="">Selecione</option>
+                  <option value="RUA" th:selected="${endereco.tipoLogradouro != null and endereco.tipoLogradouro.name() == 'RUA'}">Rua</option>
+                  <option value="AVENIDA" th:selected="${endereco.tipoLogradouro != null and endereco.tipoLogradouro.name() == 'AVENIDA'}">Avenida</option>
+                  <option value="ALAMEDA" th:selected="${endereco.tipoLogradouro != null and endereco.tipoLogradouro.name() == 'ALAMEDA'}">Alameda</option>
+                  <option value="TRAVESSA" th:selected="${endereco.tipoLogradouro != null and endereco.tipoLogradouro.name() == 'TRAVESSA'}">Travessa</option>
+                  <option value="RODOVIA" th:selected="${endereco.tipoLogradouro != null and endereco.tipoLogradouro.name() == 'RODOVIA'}">Rodovia</option>
+                  <option value="PRACA" th:selected="${endereco.tipoLogradouro != null and endereco.tipoLogradouro.name() == 'PRACA'}">Praça</option>
+                </select>
+
+                <input type="text" th:name="'enderecos[' + ${iterStat.index} + '].rua'" th:value="${endereco.rua}" placeholder="Rua" required>
+                <input type="text" th:name="'enderecos[' + ${iterStat.index} + '].numero'" th:value="${endereco.numero}" placeholder="Número" required>
+                <input type="text" th:name="'enderecos[' + ${iterStat.index} + '].complemento'" th:value="${endereco.complemento}" placeholder="Complemento">
+                <input type="text" th:name="'enderecos[' + ${iterStat.index} + '].bairro'" th:value="${endereco.bairro}" placeholder="Bairro" required>
+                <input type="text" th:name="'enderecos[' + ${iterStat.index} + '].cidade'" th:value="${endereco.cidade}" placeholder="Cidade" required>
+
+                <!-- UF - CORRIGIDO -->
+                <select th:name="'enderecos[' + ${iterStat.index} + '].uf'" required>
+                  <option value="">UF</option>
+                  <option value="AC" th:selected="${endereco.uf != null and endereco.uf.name() == 'AC'}">AC</option>
+                  <option value="AL" th:selected="${endereco.uf != null and endereco.uf.name() == 'AL'}">AL</option>
+                  <option value="AP" th:selected="${endereco.uf != null and endereco.uf.name() == 'AP'}">AP</option>
+                  <option value="AM" th:selected="${endereco.uf != null and endereco.uf.name() == 'AM'}">AM</option>
+                  <option value="BA" th:selected="${endereco.uf != null and endereco.uf.name() == 'BA'}">BA</option>
+                  <option value="CE" th:selected="${endereco.uf != null and endereco.uf.name() == 'CE'}">CE</option>
+                  <option value="DF" th:selected="${endereco.uf != null and endereco.uf.name() == 'DF'}">DF</option>
+                  <option value="ES" th:selected="${endereco.uf != null and endereco.uf.name() == 'ES'}">ES</option>
+                  <option value="GO" th:selected="${endereco.uf != null and endereco.uf.name() == 'GO'}">GO</option>
+                  <option value="MA" th:selected="${endereco.uf != null and endereco.uf.name() == 'MA'}">MA</option>
+                  <option value="MT" th:selected="${endereco.uf != null and endereco.uf.name() == 'MT'}">MT</option>
+                  <option value="MS" th:selected="${endereco.uf != null and endereco.uf.name() == 'MS'}">MS</option>
+                  <option value="MG" th:selected="${endereco.uf != null and endereco.uf.name() == 'MG'}">MG</option>
+                  <option value="PA" th:selected="${endereco.uf != null and endereco.uf.name() == 'PA'}">PA</option>
+                  <option value="PB" th:selected="${endereco.uf != null and endereco.uf.name() == 'PB'}">PB</option>
+                  <option value="PR" th:selected="${endereco.uf != null and endereco.uf.name() == 'PR'}">PR</option>
+                  <option value="PE" th:selected="${endereco.uf != null and endereco.uf.name() == 'PE'}">PE</option>
+                  <option value="PI" th:selected="${endereco.uf != null and endereco.uf.name() == 'PI'}">PI</option>
+                  <option value="RJ" th:selected="${endereco.uf != null and endereco.uf.name() == 'RJ'}">RJ</option>
+                  <option value="RN" th:selected="${endereco.uf != null and endereco.uf.name() == 'RN'}">RN</option>
+                  <option value="RS" th:selected="${endereco.uf != null and endereco.uf.name() == 'RS'}">RS</option>
+                  <option value="RO" th:selected="${endereco.uf != null and endereco.uf.name() == 'RO'}">RO</option>
+                  <option value="RR" th:selected="${endereco.uf != null and endereco.uf.name() == 'RR'}">RR</option>
+                  <option value="SC" th:selected="${endereco.uf != null and endereco.uf.name() == 'SC'}">SC</option>
+                  <option value="SP" th:selected="${endereco.uf != null and endereco.uf.name() == 'SP'}">SP</option>
+                  <option value="SE" th:selected="${endereco.uf != null and endereco.uf.name() == 'SE'}">SE</option>
+                  <option value="TO" th:selected="${endereco.uf != null and endereco.uf.name() == 'TO'}">TO</option>
+                </select>
+
+                <input type="text" th:name="'enderecos[' + ${iterStat.index} + '].cep'" th:value="${endereco.cep}" placeholder="CEP" class="cep" required>
+                <input type="text" th:name="'enderecos[' + ${iterStat.index} + '].apelido'" th:value="${endereco.apelido}" placeholder="Apelido">
+              </div>
+
+              <div class="checkbox-group">
+                <label>
+                  <input type="checkbox" th:name="'enderecos[' + ${iterStat.index} + '].enderecoEntrega'" th:checked="${endereco.enderecoEntrega}" value="true">
+                  <i class="bi bi-truck"></i> Entrega
+                </label>
+                <label>
+                  <input type="checkbox" th:name="'enderecos[' + ${iterStat.index} + '].enderecoCobranca'" th:checked="${endereco.enderecoCobranca}" value="true">
+                  <i class="bi bi-credit-card"></i> Cobrança
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="btn-add" onclick="adicionarEndereco()">
+            <i class="bi bi-plus-circle"></i> Adicionar Endereço
+          </button>
+        </div>
+
+        <!-- TELEFONES -->
+        <div class="form-section">
+          <h3><i class="bi bi-telephone"></i> Telefones</h3>
+
+          <div id="telefones-container">
+            <div th:each="telefone, iterStat : ${cliente.telefones}" class="telefone-bloco">
+              <button type="button" class="btn-remove" onclick="removerItem(this, 'telefone')">
+                <i class="bi bi-x"></i>
+              </button>
+
+              <input type="hidden" th:name="'telefones[' + ${iterStat.index} + '].id'" th:value="${telefone.id}" />
+
+              <div class="form-grid">
+                <select th:name="'telefones[' + ${iterStat.index} + '].tipo'" required>
+                  <option value="CELULAR" th:selected="${telefone.tipo != null and telefone.tipo.name() == 'CELULAR'}">Celular</option>
+                  <option value="FIXO" th:selected="${telefone.tipo != null and telefone.tipo.name() == 'FIXO'}">Residencial</option>
+                </select>
+                <input type="text" th:name="'telefones[' + ${iterStat.index} + '].ddd'" th:value="${telefone.ddd}" placeholder="DDD" class="ddd" maxlength="2" required>
+                <input type="text" th:name="'telefones[' + ${iterStat.index} + '].numero'" th:value="${telefone.numero}" placeholder="Número" class="telefone" required>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="btn-add" onclick="adicionarTelefone()">
+            <i class="bi bi-plus-circle"></i> Adicionar Telefone
+          </button>
+        </div>
+
+        <!-- CARTÕES DE CRÉDITO -->
+        <div class="form-section">
+          <h3><i class="bi bi-credit-card"></i> Cartões de Crédito</h3>
+
+          <div id="cartoes-container">
+            <div th:each="cartao, iterStat : ${cliente.cartoesCredito}" class="cartao-bloco">
+              <button type="button" class="btn-remove" onclick="removerItem(this, 'cartao')">
+                <i class="bi bi-x"></i>
+              </button>
+
+              <input type="hidden" th:name="'cartoesCredito[' + ${iterStat.index} + '].id'" th:value="${cartao.id}" />
+
+              <div class="form-grid">
+                <input type="text" th:name="'cartoesCredito[' + ${iterStat.index} + '].numeroCartao'" th:value="${cartao.numeroCartao}" placeholder="Número do cartão" class="cartao-numero" required>
+                <input type="text" th:name="'cartoesCredito[' + ${iterStat.index} + '].nomeImpresso'" th:value="${cartao.nomeImpresso}" placeholder="Nome impresso" required>
+                <input type="text" th:name="'cartoesCredito[' + ${iterStat.index} + '].codigoSeguranca'" th:value="${cartao.codigoSeguranca}" placeholder="CVV" class="cvv" maxlength="4" required>
+                <select th:name="'cartoesCredito[' + ${iterStat.index} + '].bandeira'" required>
+                  <option value="VISA" th:selected="${cartao.bandeira != null and cartao.bandeira.name() == 'VISA'}">Visa</option>
+                  <option value="MASTERCARD" th:selected="${cartao.bandeira != null and cartao.bandeira.name() == 'MASTERCARD'}">Mastercard</option>
+                  <option value="ELO" th:selected="${cartao.bandeira != null and cartao.bandeira.name() == 'ELO'}">Elo</option>
+                  <option value="AMERICAN_EXPRESS" th:selected="${cartao.bandeira != null and cartao.bandeira.name() == 'AMERICAN_EXPRESS'}">American Express</option>
+                </select>
+              </div>
+
+              <div class="checkbox-group" style="margin-top: 15px;">
+                <label>
+                  <input type="checkbox" th:name="'cartoesCredito[' + ${iterStat.index} + '].preferencial'" th:checked="${cartao.preferencial}" value="true">
+                  <i class="bi bi-star-fill" style="color: #ffc107;"></i> Cartão Preferencial
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="btn-add" onclick="adicionarCartao()">
+            <i class="bi bi-plus-circle"></i> Adicionar Cartão
+          </button>
+        </div>
+
+        <!-- BOTÕES DE AÇÃO -->
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="btnSubmit">
+            <i class="bi bi-check-lg"></i> Salvar Alterações
+          </button>
+          <a th:href="@{/admin/clientes}" class="btn btn-secondary">
+            <i class="bi bi-x-lg"></i> Cancelar
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATES PARA NOVOS ITENS -->
+<div id="enderecoTemplate" style="display: none;">
+  <div class="endereco-bloco template">
+    <button type="button" class="btn-remove" onclick="removerItem(this, 'endereco')">
+      <i class="bi bi-x"></i>
+    </button>
+    <div class="form-grid">
+      <select name="enderecos[INDEX].tipoLogradouro" required>
+        <option value="">Selecione</option>
+        <option value="RUA">Rua</option>
+        <option value="AVENIDA">Avenida</option>
+        <option value="ALAMEDA">Alameda</option>
+        <option value="TRAVESSA">Travessa</option>
+        <option value="RODOVIA">Rodovia</option>
+        <option value="PRACA">Praça</option>
+      </select>
+      <input type="text" name="enderecos[INDEX].rua" placeholder="Rua" required>
+      <input type="text" name="enderecos[INDEX].numero" placeholder="Número" required>
+      <input type="text" name="enderecos[INDEX].complemento" placeholder="Complemento">
+      <input type="text" name="enderecos[INDEX].bairro" placeholder="Bairro" required>
+      <input type="text" name="enderecos[INDEX].cidade" placeholder="Cidade" required>
+      <select name="enderecos[INDEX].uf" required>
+        <option value="">UF</option>
+        <option value="AC">AC</option>
+        <option value="AL">AL</option>
+        <option value="AP">AP</option>
+        <option value="AM">AM</option>
+        <option value="BA">BA</option>
+        <option value="CE">CE</option>
+        <option value="DF">DF</option>
+        <option value="ES">ES</option>
+        <option value="GO">GO</option>
+        <option value="MA">MA</option>
+        <option value="MT">MT</option>
+        <option value="MS">MS</option>
+        <option value="MG">MG</option>
+        <option value="PA">PA</option>
+        <option value="PB">PB</option>
+        <option value="PR">PR</option>
+        <option value="PE">PE</option>
+        <option value="PI">PI</option>
+        <option value="RJ">RJ</option>
+        <option value="RN">RN</option>
+        <option value="RS">RS</option>
+        <option value="RO">RO</option>
+        <option value="RR">RR</option>
+        <option value="SC">SC</option>
+        <option value="SP">SP</option>
+        <option value="SE">SE</option>
+        <option value="TO">TO</option>
+      </select>
+      <input type="text" name="enderecos[INDEX].cep" placeholder="CEP" class="cep" required>
+      <input type="text" name="enderecos[INDEX].apelido" placeholder="Apelido">
+    </div>
+    <div class="checkbox-group">
+      <label>
+        <input type="checkbox" name="enderecos[INDEX].enderecoEntrega" value="true">
+        <i class="bi bi-truck"></i> Entrega
+      </label>
+      <label>
+        <input type="checkbox" name="enderecos[INDEX].enderecoCobranca" value="true">
+        <i class="bi bi-credit-card"></i> Cobrança
+      </label>
+    </div>
+  </div>
+</div>
+
+<div id="telefoneTemplate" style="display: none;">
+  <div class="telefone-bloco template">
+    <button type="button" class="btn-remove" onclick="removerItem(this, 'telefone')">
+      <i class="bi bi-x"></i>
+    </button>
+    <div class="form-grid">
+      <select name="telefones[INDEX].tipo" required>
+        <option value="CELULAR">Celular</option>
+        <option value="FIXO">Residencial</option>
+      </select>
+      <input type="text" name="telefones[INDEX].ddd" placeholder="DDD" class="ddd" maxlength="2" required>
+      <input type="text" name="telefones[INDEX].numero" placeholder="Número" class="telefone" required>
+    </div>
+  </div>
+</div>
+
+<div id="cartaoTemplate" style="display: none;">
+  <div class="cartao-bloco template">
+    <button type="button" class="btn-remove" onclick="removerItem(this, 'cartao')">
+      <i class="bi bi-x"></i>
+    </button>
+    <div class="form-grid">
+      <input type="text" name="cartoesCredito[INDEX].numeroCartao" placeholder="Número do cartão" class="cartao-numero" required>
+      <input type="text" name="cartoesCredito[INDEX].nomeImpresso" placeholder="Nome impresso" required>
+      <input type="text" name="cartoesCredito[INDEX].codigoSeguranca" placeholder="CVV" class="cvv" maxlength="4" required>
+      <select name="cartoesCredito[INDEX].bandeira" required>
+        <option value="VISA">Visa</option>
+        <option value="MASTERCARD">Mastercard</option>
+        <option value="ELO">Elo</option>
+        <option value="AMERICAN_EXPRESS">American Express</option>
+      </select>
+    </div>
+    <div class="checkbox-group" style="margin-top: 15px;">
+      <label>
+        <input type="checkbox" name="cartoesCredito[INDEX].preferencial" value="true">
+        <i class="bi bi-star-fill" style="color: #ffc107;"></i> Cartão Preferencial
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script th:inline="javascript">
+  $(document).ready(function() {
+    // ===== MÁSCARAS =====
+    $('.cpf').mask('000.000.000-00');
+    $('.cep').mask('00000-000');
+    $('.ddd').mask('00');
+    $('.telefone').mask('00000-0000');
+    $('.cartao-numero').mask('0000 0000 0000 0000');
+    $('.cvv').mask('0000');
+
+    // ===== FEEDBACK VISUAL DE CAMPOS OBRIGATÓRIOS =====
+    $('input[required], select[required]').on('invalid', function(e) {
+      e.preventDefault();
+      $(this).addClass('is-invalid');
+    }).on('input change', function() {
+      $(this).removeClass('is-invalid');
+    });
+  });
+
+  /* =========================
+     CONTADORES PARA ÍNDICES
+  ========================== */
+  let enderecoIndex = /*[[${cliente.enderecos != null ? cliente.enderecos.size() : 0}]]*/ 2;
+  let telefoneIndex = /*[[${cliente.telefones != null ? cliente.telefones.size() : 0}]]*/ 2;
+  let cartaoIndex = /*[[${cliente.cartoesCredito != null ? cliente.cartoesCredito.size() : 0}]]*/ 2;
+
+  /* =========================
+     FUNÇÕES PARA ADICIONAR ITENS
+  ========================== */
+  function adicionarEndereco() {
+    const template = $('#enderecoTemplate .template').clone();
+    let html = template.prop('outerHTML')
+            .replace(/\[INDEX\]/g, '[' + enderecoIndex + ']')
+            .replace(/INDEX/g, enderecoIndex);
+
+    $('#enderecos-container').append(html);
+    aplicarMascarasEndereco();
+    enderecoIndex++;
+  }
+
+  function adicionarTelefone() {
+    const template = $('#telefoneTemplate .template').clone();
+    let html = template.prop('outerHTML')
+            .replace(/\[INDEX\]/g, '[' + telefoneIndex + ']')
+            .replace(/INDEX/g, telefoneIndex);
+
+    $('#telefones-container').append(html);
+    aplicarMascarasTelefone();
+    telefoneIndex++;
+  }
+
+  function adicionarCartao() {
+    const template = $('#cartaoTemplate .template').clone();
+    let html = template.prop('outerHTML')
+            .replace(/\[INDEX\]/g, '[' + cartaoIndex + ']')
+            .replace(/INDEX/g, cartaoIndex);
+
+    $('#cartoes-container').append(html);
+    aplicarMascarasCartao();
+    cartaoIndex++;
+  }
+
+  /* =========================
+     FUNÇÕES PARA APLICAR MÁSCARAS
+  ========================== */
+  function aplicarMascarasEndereco() {
+    $('.endereco-bloco').last().find('.cep').mask('00000-000');
+  }
+
+  function aplicarMascarasTelefone() {
+    let item = $('.telefone-bloco').last();
+    item.find('.ddd').mask('00');
+    item.find('.telefone').mask('00000-0000');
+  }
+
+  function aplicarMascarasCartao() {
+    let item = $('.cartao-bloco').last();
+    item.find('.cartao-numero').mask('0000 0000 0000 0000');
+    item.find('.cvv').mask('0000');
+  }
+
+  /* =========================
+     MARCAÇÃO DE CARTÃO PREFERENCIAL
+  ========================== */
+  $(document).on('change', 'input[name$=".preferencial"]', function() {
+    if ($(this).is(':checked')) {
+      $('input[name$=".preferencial"]').not(this).prop('checked', false);
+    }
+  });
+
+  /* =========================
+     SUBMIT DO FORMULÁRIO
+  ========================== */
+  let submitting = false;
+
+  $('#clienteForm').submit(function() {
+    if (submitting) {
+      return false;
+    }
+    submitting = true;
+
+    const $btn = $('#btnSubmit');
+    $btn.prop('disabled', true)
+            .html('<i class="bi bi-arrow-repeat spinner"></i> Salvando...');
+
+    return true;
+  });
+
+  /* =========================
+     REMOVER ITEM
+  ========================== */
+  window.removerItem = function(botao, tipo) {
+    if (confirm('Deseja remover este ' + tipo + '?')) {
+      $(botao).closest('.' + tipo + '-bloco').remove();
+
+      // Revalidar preferencial após remoção
+      if (tipo === 'cartao') {
+        let preferenciais = $('input[name$=".preferencial"]:checked').length;
+        if (preferenciais === 0 && $('.cartao-bloco').length > 0) {
+          $('.cartao-bloco').first().find('input[name$=".preferencial"]').prop('checked', true);
+        }
+      }
+    }
+  };
+</script>
+
+</body>
+</html>

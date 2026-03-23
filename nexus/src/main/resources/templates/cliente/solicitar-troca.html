@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Solicitar Troca - BookNexus</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<section class="admin-hero" style="background: linear-gradient(135deg, #1e90ff, #2a5298);">
+  <h1>Solicitar Troca de Produto</h1>
+</section>
+
+<div class="card" style="width:60%; margin:40px auto;">
+  <form>
+    <label>Produto</label>
+    <input type="text" value="Clean Code" disabled style="width:100%; padding:10px; margin-bottom:15px;">
+
+    <label>Motivo da Troca</label>
+    <select style="width:100%; padding:10px; margin-bottom:15px;">
+      <option>Produto com defeito</option>
+      <option>Produto errado</option>
+      <option>Arrependimento</option>
+      <option>Outro</option>
+    </select>
+
+    <label>Descrição Detalhada</label>
+    <textarea style="width:100%; padding:10px; height:100px; margin-bottom:15px;"></textarea>
+
+    <div style="text-align:center;">
+      <a href="/pedidos" class="btn">Confirmar Solicitação</a>
+      <a href="/pedidos" class="btn secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+</body>
+</html>

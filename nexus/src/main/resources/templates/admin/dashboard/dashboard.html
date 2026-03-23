@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - BookNexus</title>
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        /* ===== RESET ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+            display: flex;
+            background: #f4f9fb;
+            color: #333;
+        }
+
+        /* ===== SIDEBAR (IDENTICA À HOMEPAGE) ===== */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 30px 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 22px;
+            padding: 0 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 20px;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: white;
+            padding: 15px 25px;
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.3s;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar a i {
+            font-size: 20px;
+            width: 24px;
+        }
+
+        .sidebar a:hover {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #26a69a;
+        }
+
+        .sidebar a.active {
+            background: rgba(255,255,255,0.15);
+            border-left-color: #26a69a;
+            font-weight: 600;
+        }
+
+        /* ===== CONTENT ===== */
+        .content {
+            margin-left: 260px;
+            padding: 40px;
+            flex: 1;
+            min-height: 100vh;
+            width: calc(100% - 260px);
+        }
+
+        .content h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #1e3c72;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .content > p {
+            color: #555;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        /* ===== MENSAGEM DE BOAS-VINDAS ===== */
+        .welcome-message {
+            background: linear-gradient(135deg, #e3f2fd, #e0f2f1);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid #1e88e5;
+        }
+
+        .welcome-message h2 {
+            color: #1e3c72;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .welcome-message p {
+            margin-bottom: 0;
+            color: #2a5298;
+        }
+
+        /* ===== GRID DO DASHBOARD ===== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        /* ===== CARDS DO DASHBOARD ===== */
+        .dashboard-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            border-color: #1e88e5;
+        }
+
+        .card-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        .card-icon.sales {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            color: #1e88e5;
+        }
+
+        .card-icon.orders {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            color: #26a69a;
+        }
+
+        .card-icon.customers {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            color: #ff9800;
+        }
+
+        .card-icon.products {
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+            color: #9c27b0;
+        }
+
+        .card-icon.revenue {
+            background: linear-gradient(135deg, #e0f2f1, #b2dfdb);
+            color: #009688;
+        }
+
+        .card-icon.average {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            color: #f44336;
+        }
+
+        .card-content {
+            flex: 1;
+        }
+
+        .card-content h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 5px;
+        }
+
+        .metric-trend {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .trend-up {
+            color: #26a69a;
+        }
+
+        .trend-down {
+            color: #e53935;
+        }
+
+        /* ===== CARD DE GRÁFICO ===== */
+        .chart-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .chart-header h3 {
+            color: #1e3c72;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+        }
+
+        .legend-color.ficcao {
+            background: #1e88e5;
+        }
+
+        .legend-color.nao-ficcao {
+            background: #26a69a;
+        }
+
+        .legend-color.cientifico {
+            background: #9c27b0;
+        }
+
+        .legend-color.infantil {
+            background: #ff9800;
+        }
+
+        /* ===== GRÁFICO DE LINHAS FAKE ===== */
+        .line-chart-container {
+            background: #f8faff;
+            border-radius: 16px;
+            padding: 30px 20px 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .chart-grid {
+            position: relative;
+            height: 300px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            border-bottom: 2px solid #ddd;
+            border-left: 2px solid #ddd;
+            margin-left: 40px;
+            padding-bottom: 10px;
+        }
+
+        .chart-grid::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                    transparent,
+                    transparent 49px,
+                    rgba(0,0,0,0.05) 50px
+            );
+            pointer-events: none;
+        }
+
+        .chart-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            height: 100%;
+            max-width: 80px;
+        }
+
+        .chart-lines {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Linhas para cada categoria */
+        .line-point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            transform: translate(-50%, 50%);
+            cursor: pointer;
+            transition: transform 0.2s;
+            z-index: 3;
+        }
+
+        .line-point:hover {
+            transform: translate(-50%, 50%) scale(1.5);
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+
+        .line-point.ficcao {
+            background: #1e88e5;
+            border: 2px solid white;
+        }
+
+        .line-point.nao-ficcao {
+            background: #26a69a;
+            border: 2px solid white;
+        }
+
+        .line-point.cientifico {
+            background: #9c27b0;
+            border: 2px solid white;
+        }
+
+        .line-point.infantil {
+            background: #ff9800;
+            border: 2px solid white;
+        }
+
+        /* Linhas conectando os pontos */
+        .line-connection {
+            position: absolute;
+            height: 2px;
+            background: #1e88e5;
+            transform-origin: 0 0;
+            z-index: 2;
+            opacity: 0.6;
+        }
+
+        .line-connection.ficcao {
+            background: #1e88e5;
+        }
+
+        .line-connection.nao-ficcao {
+            background: #26a69a;
+        }
+
+        .line-connection.cientifico {
+            background: #9c27b0;
+        }
+
+        .line-connection.infantil {
+            background: #ff9800;
+        }
+
+        .chart-x-labels {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            margin-left: 40px;
+            padding: 0 10px;
+        }
+
+        .chart-x-label {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+            max-width: 80px;
+        }
+
+        .chart-y-labels {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0 5px;
+        }
+
+        .chart-y-label {
+            font-size: 10px;
+            color: #999;
+            text-align: right;
+            transform: translateY(50%);
+        }
+
+        .chart-tooltip {
+            position: absolute;
+            background: #1e3c72;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .chart-tooltip:after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid #1e3c72;
+        }
+
+        /* ===== GRID SECUNDÁRIO ===== */
+        .secondary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+
+        .info-card h3 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .top-product-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .top-product-item:last-child {
+            border-bottom: none;
+        }
+
+        .product-rank {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e3f2fd;
+            color: #1e88e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .product-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .product-sales {
+            color: #1e88e5;
+            font-weight: 600;
+        }
+
+        /* ===== BOTÃO VOLTAR ===== */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            padding: 12px 24px;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #1e88e5, #26a69a);
+            color: white;
+            text-decoration: none;
+            transition: 0.3s;
+            border: none;
+            font-weight: 500;
+        }
+
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(30,136,229,0.3);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                overflow: hidden;
+            }
+            .sidebar h2, .sidebar a span {
+                display: none;
+            }
+            .sidebar a {
+                justify-content: center;
+                padding: 20px 0;
+            }
+            .content {
+                margin-left: 70px;
+                padding: 20px;
+                width: calc(100% - 70px);
+            }
+            .dashboard-card {
+                flex-direction: column;
+                text-align: center;
+            }
+            .chart-grid {
+                margin-left: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR IDENTICA À HOMEPAGE -->
+<div class="sidebar">
+    <h2>📚 BookNexus</h2>
+
+    <a th:href="@{/admin}" class="sidebar-link">
+        <i class="bi bi-house-door-fill"></i>
+        <span>Início</span>
+    </a>
+
+    <a th:href="@{/admin/clientes}" class="sidebar-link">
+        <i class="bi bi-people-fill"></i>
+        <span>Clientes</span>
+    </a>
+
+    <a th:href="@{/admin/produtos}" class="sidebar-link">
+        <i class="bi bi-box-seam"></i>
+        <span>Estoque</span>
+    </a>
+
+    <a th:href="@{/admin/pedidos}" class="sidebar-link">
+        <i class="bi bi-cart-fill"></i>
+        <span>Pedidos</span>
+    </a>
+
+    <a th:href="@{/admin/dashboard}" class="sidebar-link active">
+        <i class="bi bi-speedometer2"></i>
+        <span>Dashboard</span>
+    </a>
+
+    <a th:href="@{/admin/log}" class="sidebar-link">
+        <i class="bi bi-file-text-fill"></i>
+        <span>Relatórios</span>
+    </a>
+
+    <a th:href="@{/admin}" style="margin-top: auto;">
+        <i class="bi bi-box-arrow-right"></i>
+        <span>Sair</span>
+    </a>
+</div>
+
+<!-- CONTEÚDO PRINCIPAL -->
+<div class="content">
+
+    <!-- Mensagem de boas-vindas -->
+    <div class="welcome-message">
+        <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
+        <p>Visão geral do desempenho da sua loja BookNexus.</p>
+    </div>
+
+    <h1>
+        <i class="bi bi-graph-up"></i>
+        Dashboard
+    </h1>
+    <p>Acompanhe os principais indicadores da sua loja em tempo real.</p>
+
+    <!-- GRÁFICO DE LINHAS - VOLUME DE PRODUTOS POR CATEGORIA (VAZIO) -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <h3>
+                <i class="bi bi-graph-up"></i>
+                Volume de Vendas por Categoria
+            </h3>
+            <div class="chart-legend">
+            <span class="legend-item">
+                <span class="legend-color ficcao"></span>
+                Ficção
+            </span>
+                <span class="legend-item">
+                <span class="legend-color nao-ficcao"></span>
+                Não-Ficção
+            </span>
+                <span class="legend-item">
+                <span class="legend-color cientifico"></span>
+                Científico
+            </span>
+                <span class="legend-item">
+                <span class="legend-color infantil"></span>
+                Infantil
+            </span>
+            </div>
+        </div>
+
+        <div class="line-chart-container">
+            <!-- Tooltip que aparece ao passar o mouse (invisível) -->
+            <div class="chart-tooltip" id="chartTooltip" style="opacity: 0;">Carregando dados...</div>
+
+            <!-- Grid do gráfico vazio -->
+            <div class="chart-grid" id="chartGrid">
+                <!-- Rótulos do eixo Y (escala) -->
+                <div class="chart-y-labels">
+                    <span class="chart-y-label">80</span>
+                    <span class="chart-y-label">60</span>
+                    <span class="chart-y-label">40</span>
+                    <span class="chart-y-label">20</span>
+                    <span class="chart-y-label">0</span>
+                </div>
+
+                <!-- Colunas para cada mês - APENAS ESTRUTURA, SEM DADOS -->
+                <!-- Janeiro -->
+                <div class="chart-column" data-month="Jan">
+                    <div class="chart-lines" style="height: 100%;">
+                        <!-- Sem pontos de dados -->
+                    </div>
+                </div>
+
+                <!-- Fevereiro -->
+                <div class="chart-column" data-month="Fev">
+                    <div class="chart-lines" style="height: 100%;">
+                        <!-- Sem pontos de dados -->
+                    </div>
+                </div>
+
+                <!-- Março -->
+                <div class="chart-column" data-month="Mar">
+                    <div class="chart-lines" style="height: 100%;">
+                        <!-- Sem pontos de dados -->
+                    </div>
+                </div>
+
+                <!-- Abril -->
+                <div class="chart-column" data-month="Abr">
+                    <div class="chart-lines" style="height: 100%;">
+                        <!-- Sem pontos de dados -->
+                    </div>
+                </div>
+
+                <!-- Maio -->
+                <div class="chart-column" data-month="Mai">
+                    <div class="chart-lines" style="height: 100%;">
+                        <!-- Sem pontos de dados -->
+                    </div>
+                </div>
+
+                <!-- Junho -->
+                <div class="chart-column" data-month="Jun">
+                    <div class="chart-lines" style="height: 100%;">
+                        <!-- Sem pontos de dados -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rótulos do eixo X (meses) -->
+            <div class="chart-x-labels">
+                <span class="chart-x-label">JAN</span>
+                <span class="chart-x-label">FEV</span>
+                <span class="chart-x-label">MAR</span>
+                <span class="chart-x-label">ABR</span>
+                <span class="chart-x-label">MAI</span>
+                <span class="chart-x-label">JUN</span>
+            </div>
+
+            <!-- Mensagem de gráfico vazio -->
+            <div style="text-align: center; padding: 40px 20px; background: #f8faff; border-radius: 12px; margin-top: 20px;">
+                <i class="bi bi-bar-chart" style="font-size: 48px; color: #ccc;"></i>
+                <p style="color: #999; margin-top: 10px; font-size: 14px;">
+                    Nenhum dado disponível para o período selecionado.
+                </p>
+                <p style="color: #666; font-size: 13px;">
+                    Os dados serão exibidos assim que houver vendas registradas.
+                </p>
+            </div>
+        </div>
+
+        <p style="text-align: center; color: #666; margin-top: 15px; font-size: 13px;">
+            <i class="bi bi-info-circle"></i> Selecione um período para visualizar os dados
+        </p>
+    </div>
+
+    <!-- BOTÃO VOLTAR -->
+    <div style="text-align: center;">
+        <a th:href="@{/admin}" class="btn-back">
+            <i class="bi bi-arrow-left"></i>
+            Voltar ao Painel
+        </a>
+    </div>
+
+</div>
+
+<!-- SCRIPT PARA INTERATIVIDADE DO GRÁFICO (OPCIONAL) -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tooltip = document.getElementById('chartTooltip');
+        const points = document.querySelectorAll('.line-point');
+
+        points.forEach(point => {
+            point.addEventListener('mouseenter', function(e) {
+                const value = this.getAttribute('data-value');
+                const categoria = this.getAttribute('data-categoria');
+                const mes = this.getAttribute('data-mês');
+
+                tooltip.style.opacity = '1';
+                tooltip.style.left = (e.pageX - tooltip.offsetWidth / 2) + 'px';
+                tooltip.style.top = (e.pageY - tooltip.offsetHeight - 10) + 'px';
+                tooltip.innerHTML = `<strong>${categoria}</strong><br>${mes}: ${value} unidades`;
+            });
+
+            point.addEventListener('mouseleave', function() {
+                tooltip.style.opacity = '0';
+            });
+        });
+
+        // Atualizar posição do tooltip durante o movimento do mouse
+        document.addEventListener('mousemove', function(e) {
+            if (tooltip.style.opacity === '1') {
+                tooltip.style.left = (e.pageX - tooltip.offsetWidth / 2) + 'px';
+                tooltip.style.top = (e.pageY - tooltip.offsetHeight - 10) + 'px';
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

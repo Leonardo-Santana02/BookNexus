@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${cliente != null} ? 'Detalhes do Cliente - ' + ${cliente.nome} : 'Detalhes do Cliente - BookNexus'">Detalhes do Cliente - BookNexus</title>
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Bootstrap CSS para componentes adicionais -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- jQuery (necessário para alguns componentes) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        /* ===== RESET ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+            display: flex;
+            background: #f4f9fb;
+            color: #333;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 30px 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 22px;
+            padding: 0 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 20px;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: white;
+            padding: 15px 25px;
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.3s;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar a i {
+            font-size: 20px;
+            width: 24px;
+        }
+
+        .sidebar a:hover {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #26a69a;
+        }
+
+        .sidebar a.active {
+            background: rgba(255,255,255,0.15);
+            border-left-color: #26a69a;
+            font-weight: 600;
+        }
+
+        /* ===== CONTEÚDO ===== */
+        .content {
+            margin-left: 260px;
+            padding: 40px;
+            flex: 1;
+            min-height: 100vh;
+            width: calc(100% - 260px);
+        }
+
+        .content h1 {
+            font-size: 32px;
+            margin-bottom: 30px;
+            color: #1e3c72;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ===== FORMULÁRIO/DETALHES ===== */
+        .form-container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .form-section {
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #eef2f6;
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .form-section h3 {
+            color: #1e3c72;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-section h3 i {
+            color: #1e88e5;
+            font-size: 24px;
+        }
+
+        /* ===== GRID DE DETALHES ===== */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            background: #f8faff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e0e7ff;
+        }
+
+        .details-grid div {
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #eef2f6;
+        }
+
+        .details-grid div strong {
+            color: #1e88e5;
+            margin-right: 8px;
+        }
+
+        /* ===== CARDS DE DETALHES ===== */
+        .details-card {
+            background: #f8faff;
+            border: 2px solid #e0e7ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            transition: 0.3s;
+        }
+
+        .details-card:hover {
+            border-color: #1e88e5;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .details-card p {
+            margin: 0;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #eef2f6;
+        }
+
+        .details-card p strong {
+            color: #1e88e5;
+            margin-right: 5px;
+        }
+
+        /* ===== STATUS BADGE ===== */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .status-badge.active {
+            background: #26a69a;
+        }
+
+        .status-badge.inactive {
+            background: #e53935;
+        }
+
+        /* ===== BOTÕES DE AÇÃO ===== */
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eef2f6;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e88e5, #26a69a);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30,136,229,0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #555;
+            border: 2px solid #e0e7ff;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e7ff;
+            transform: translateY(-2px);
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #1e88e5, #26a69a);
+            color: white;
+            text-decoration: none;
+            transition: 0.3s;
+            border: none;
+            font-weight: 500;
+        }
+
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(30,136,229,0.3);
+        }
+
+        /* ===== ICONES DE TIPO ===== */
+        .tipo-entrega {
+            background: #e3f2fd;
+            color: #1e88e5;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tipo-cobranca {
+            background: #fff3e0;
+            color: #f57c00;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tipo-celular {
+            background: #e8f5e9;
+            color: #43a047;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tipo-fixo {
+            background: #f3e5f5;
+            color: #8e24aa;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .bandeira {
+            background: #ffebee;
+            color: #e53935;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* ===== BANDEIRAS ESPECÍFICAS ===== */
+        .bandeira-visa {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .bandeira-mastercard {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .bandeira-elo {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .bandeira-amex {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                overflow: hidden;
+            }
+            .sidebar h2, .sidebar a span {
+                display: none;
+            }
+            .sidebar a {
+                justify-content: center;
+                padding: 20px 0;
+            }
+            .sidebar a i {
+                margin: 0;
+            }
+            .content {
+                margin-left: 70px;
+                padding: 20px;
+                width: calc(100% - 70px);
+            }
+            .form-actions {
+                flex-direction: column;
+            }
+            .form-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+            .details-card {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== ALERTAS ===== */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #999;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>📚 BookNexus</h2>
+
+    <a th:href="@{/admin}">
+        <i class="bi bi-house-door-fill"></i>
+        <span>Início</span>
+    </a>
+
+    <a th:href="@{/admin/clientes}" class="active">
+        <i class="bi bi-people-fill"></i>
+        <span>Clientes</span>
+    </a>
+
+    <a th:href="@{/admin/produtos}">
+        <i class="bi bi-box-seam"></i>
+        <span>Estoque</span>
+    </a>
+
+    <a th:href="@{/admin/pedidos}">
+        <i class="bi bi-cart-fill"></i>
+        <span>Pedidos</span>
+    </a>
+
+    <a th:href="@{/admin/dashboard}">
+        <i class="bi bi-speedometer2"></i>
+        <span>Dashboard</span>
+    </a>
+
+    <a th:href="@{/admin/log}">
+        <i class="bi bi-file-text-fill"></i>
+        <span>Relatórios</span>
+    </a>
+
+    <a th:href="@{/admin}" style="margin-top: auto;">
+        <i class="bi bi-box-arrow-right"></i>
+        <span>Sair</span>
+    </a>
+</div>
+
+<!-- CONTEÚDO PRINCIPAL -->
+<div class="content">
+
+    <!-- Verifica se o cliente existe -->
+    <div th:if="${cliente == null}">
+        <div class="empty-state">
+            <i class="bi bi-exclamation-triangle"></i>
+            <h3>Cliente não encontrado</h3>
+            <p>O cliente que você está procurando não existe ou foi removido.</p>
+            <a th:href="@{/admin/clientes}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Voltar para Lista
+            </a>
+        </div>
+    </div>
+
+    <!-- Exibe os detalhes do cliente -->
+    <div th:if="${cliente != null}">
+        <!-- TÍTULO -->
+        <h1>
+            <i class="bi bi-person-badge"></i>
+            <span th:text="'Detalhes do Cliente: ' + ${cliente.nome}">Detalhes do Cliente</span>
+        </h1>
+
+        <!-- MENSAGENS -->
+        <div th:if="${mensagem}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            <span th:text="${mensagem}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div th:if="${erro}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span th:text="${erro}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="form-container">
+
+            <!-- DADOS PESSOAIS -->
+            <div class="form-section">
+                <h3><i class="bi bi-person-circle"></i> Dados Pessoais</h3>
+
+                <div class="details-grid">
+                    <div><strong>Nome:</strong> <span th:text="${cliente.nome}">João Silva</span></div>
+                    <div><strong>CPF:</strong> <span th:text="${cliente.cpf}">123.456.789-00</span></div>
+                    <div><strong>Email:</strong> <span th:text="${cliente.email}">joao@email.com</span></div>
+                    <div><strong>Gênero:</strong>
+                        <span th:text="${cliente.genero == 'MASCULINO' ? 'Masculino' :
+                                         (cliente.genero == 'FEMININO' ? 'Feminino' :
+                                         (cliente.genero == 'OUTRO' ? 'Outro' : cliente.genero))}">Masculino</span>
+                    </div>
+                    <div><strong>Data de Nascimento:</strong>
+                        <span th:text="${#temporals.format(cliente.dataNascimento, 'dd/MM/yyyy')}">10/05/1990</span>
+                    </div>
+                    <div>
+                        <strong>Status:</strong>
+                        <span class="status-badge"
+                              th:classappend="${cliente.inativado} ? 'inactive' : 'active'"
+                              th:text="${cliente.inativado} ? 'Inativo' : 'Ativo'">Ativo</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENDEREÇOS -->
+            <div class="form-section" th:if="${not #lists.isEmpty(cliente.enderecos)}">
+                <h3><i class="bi bi-geo-alt"></i> Endereços</h3>
+
+                <div th:each="endereco : ${cliente.enderecos}" class="details-card">
+                    <p><strong>Rua:</strong> <span th:text="${endereco.rua}">Rua Exemplo</span></p>
+                    <p><strong>Número:</strong> <span th:text="${endereco.numero}">123</span></p>
+                    <p th:if="${endereco.complemento}"><strong>Complemento:</strong> <span th:text="${endereco.complemento}">Sala 123</span></p>
+                    <p><strong>Bairro:</strong> <span th:text="${endereco.bairro}">Centro</span></p>
+                    <p><strong>Cidade:</strong> <span th:text="${endereco.cidade}">São Paulo</span></p>
+                    <p><strong>UF:</strong> <span th:text="${endereco.uf}">SP</span></p>
+                    <p><strong>CEP:</strong> <span th:text="${endereco.cep}">00000-000</span></p>
+                    <p th:if="${endereco.apelido}"><strong>Apelido:</strong> <span th:text="${endereco.apelido}">Casa</span></p>
+                    <p>
+                        <span th:if="${endereco.enderecoEntrega}" class="tipo-entrega">
+                            <i class="bi bi-truck"></i> Endereço de Entrega
+                        </span>
+                        <span th:if="${endereco.enderecoCobranca}" class="tipo-cobranca" style="margin-left: 8px;">
+                            <i class="bi bi-credit-card"></i> Endereço de Cobrança
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- ENDEREÇOS - Mensagem caso não haja -->
+            <div class="form-section" th:if="${#lists.isEmpty(cliente.enderecos)}">
+                <h3><i class="bi bi-geo-alt"></i> Endereços</h3>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Nenhum endereço cadastrado para este cliente.</span>
+                </div>
+            </div>
+
+            <!-- TELEFONES -->
+            <div class="form-section" th:if="${not #lists.isEmpty(cliente.telefones)}">
+                <h3><i class="bi bi-telephone"></i> Telefones</h3>
+
+                <div th:each="telefone : ${cliente.telefones}" class="details-card">
+                    <p>
+                        <!-- CORREÇÃO: Tradução dos tipos de telefone -->
+                        <span th:if="${telefone.tipo == 'CELULAR'}" class="tipo-celular">
+                            <i class="bi bi-phone"></i> Celular
+                        </span>
+                        <span th:if="${telefone.tipo == 'FIXO'}" class="tipo-fixo">
+                            <i class="bi bi-telephone"></i> Fixo/Residencial
+                        </span>
+                        <!-- Fallback para outros valores -->
+                        <span th:if="${telefone.tipo != 'CELULAR' and telefone.tipo != 'FIXO'}" class="tipo-fixo">
+                            <i class="bi bi-telephone"></i> <span th:text="${telefone.tipo}">Telefone</span>
+                        </span>
+                    </p>
+                    <p><strong>DDD:</strong> <span th:text="${telefone.ddd}">11</span></p>
+                    <p><strong>Número:</strong> <span th:text="${telefone.numero}">99999-9999</span></p>
+                </div>
+            </div>
+
+            <!-- TELEFONES - Mensagem caso não haja -->
+            <div class="form-section" th:if="${#lists.isEmpty(cliente.telefones)}">
+                <h3><i class="bi bi-telephone"></i> Telefones</h3>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Nenhum telefone cadastrado para este cliente.</span>
+                </div>
+            </div>
+
+            <!-- CARTÕES DE CRÉDITO -->
+            <div class="form-section" th:if="${not #lists.isEmpty(cliente.cartoesCredito)}">
+                <h3><i class="bi bi-credit-card"></i> Cartões de Crédito</h3>
+
+                <div th:each="cartao : ${cliente.cartoesCredito}" class="details-card">
+                    <p>
+                        <!-- CORREÇÃO: Classes específicas para cada bandeira -->
+                        <span class="bandeira"
+                              th:classappend="${cartao.bandeira == 'VISA'} ? 'bandeira-visa' :
+                                             (${cartao.bandeira == 'MASTERCARD'} ? 'bandeira-mastercard' :
+                                             (${cartao.bandeira == 'ELO'} ? 'bandeira-elo' :
+                                             (${cartao.bandeira == 'AMERICAN_EXPRESS'} ? 'bandeira-amex' : '')))">
+                            <i class="bi bi-credit-card"></i>
+                            <!-- CORREÇÃO: Tradução das bandeiras -->
+                            <span th:text="${cartao.bandeira == 'VISA' ? 'Visa' :
+                                            (cartao.bandeira == 'MASTERCARD' ? 'Mastercard' :
+                                            (cartao.bandeira == 'ELO' ? 'Elo' :
+                                            (cartao.bandeira == 'AMERICAN_EXPRESS' ? 'American Express' : cartao.bandeira)))}">Visa</span>
+                        </span>
+                    </p>
+                    <p><strong>Número:</strong>
+                        <span th:text="'•••• •••• •••• ' + ${#strings.substring(cartao.numeroCartao, cartao.numeroCartao.length() - 4)}">•••• •••• •••• 1234</span>
+                    </p>
+                    <p><strong>Nome Impresso:</strong> <span th:text="${cartao.nomeImpresso}">João Silva</span></p>
+                    <p>
+                        <strong>Preferencial:</strong>
+                        <span th:if="${cartao.preferencial}">
+                            <i class="bi bi-star-fill" style="color: #ffc107;"></i> Sim
+                        </span>
+                        <span th:unless="${cartao.preferencial}">Não</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- CARTÕES DE CRÉDITO - Mensagem caso não haja -->
+            <div class="form-section" th:if="${#lists.isEmpty(cliente.cartoesCredito)}">
+                <h3><i class="bi bi-credit-card"></i> Cartões de Crédito</h3>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Nenhum cartão de crédito cadastrado para este cliente.</span>
+                </div>
+            </div>
+
+            <!-- BOTÕES DE AÇÃO -->
+            <div class="form-actions">
+                <a th:href="@{'/admin/clientes/editar/' + ${cliente.id}}" class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> Editar Cliente
+                </a>
+                <a th:href="@{/admin/clientes}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar para Lista
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para esconder mensagens após alguns segundos -->
+<script>
+    $(document).ready(function() {
+        // Esconder alertas após 5 segundos
+        setTimeout(function() {
+            $('.alert').fadeOut(500);
+        }, 5000);
+    });
+</script>
+
+</body>
+</html>

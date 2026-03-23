@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>BookNexus</title>
+
+    <style>
+        /* ===== RESET ===== */
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f9fb;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: linear-gradient(90deg, #1e88e5, #26a69a);
+            padding: 15px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .search-bar {
+            position: relative;
+            flex: 0 1 400px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: none;
+            outline: none;
+        }
+
+        .search-results-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            width: 100%;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1200;
+        }
+
+        .search-results-dropdown ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .search-results-dropdown li {
+            border-bottom: 1px solid #eee;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .search-results-dropdown li:last-child {
+            border-bottom: none;
+        }
+
+        .search-results-dropdown a {
+            text-decoration: none;
+            color: #1e88e5;
+            font-weight: bold;
+        }
+
+        .search-empty {
+            padding: 14px;
+            text-align: center;
+            color: #666;
+        }
+
+        .header-actions a {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .cliente-selector {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 5px;
+            padding: 8px 12px;
+            color: white;
+            font-size: 14px;
+            min-width: 180px;
+        }
+
+        .cliente-selector option {
+            color: #333;
+            background: #fff;
+        }
+
+        .carrinho-link, .profile-link {
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .carrinho-link:hover, .profile-link:hover {
+            opacity: 0.8;
+        }
+
+        /* ===== NAV ===== */
+        .navbar {
+            background: white;
+            padding: 10px 40px;
+            display: flex;
+            gap: 30px;
+            border-bottom: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+
+        .navbar a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            background: linear-gradient(135deg, #1e88e5, #26a69a);
+            color: white;
+            padding: 80px 40px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .hero p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        /* ===== SECTION ===== */
+        .section-title {
+            padding: 30px 40px 10px;
+            font-size: 28px;
+            color: #1e3c72;
+            text-align: center;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        /* ===== GRID ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            padding: 20px 40px 60px;
+        }
+
+        /* ===== CARD ===== */
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e0e7ff;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            border-color: #1e88e5;
+        }
+
+        .card h3 {
+            margin: 10px 0 5px;
+            font-size: 18px;
+            color: #1e3c72;
+        }
+
+        .card .autor {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
+            font-style: italic;
+        }
+
+        .card .editora {
+            color: #888;
+            font-size: 13px;
+            margin: 5px 0;
+        }
+
+        .preco {
+            color: #26a69a;
+            font-weight: bold;
+            font-size: 22px;
+            margin: 15px 0 10px;
+        }
+
+        .estoque {
+            color: #999;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .estoque.baixo {
+            color: #e53935;
+            font-weight: bold;
+        }
+
+        .btn {
+            background: #1e88e5;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-block;
+            transition: 0.3s;
+            text-align: center;
+            margin-top: auto;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #1565c0;
+            transform: scale(1.02);
+        }
+
+        .btn-secondary {
+            background: #26a69a;
+        }
+
+        .btn-secondary:hover {
+            background: #1b8a80;
+        }
+
+        .btn-disabled {
+            background: #ccc;
+            pointer-events: none;
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        /* ===== CLIENT AREA ===== */
+        .client-area {
+            background: #e3f2fd;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #bbdefb;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .client-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .client-welcome {
+            font-weight: 500;
+            color: #1e3c72;
+        }
+
+        .client-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .client-actions a {
+            text-decoration: none;
+            color: #1e88e5;
+            font-weight: bold;
+            padding: 5px 15px;
+            border-radius: 20px;
+            background: white;
+            transition: 0.3s;
+        }
+
+        .client-actions a:hover {
+            background: #1e88e5;
+            color: white;
+        }
+
+        /* ===== ALERTAS ===== */
+        .alert {
+            padding: 10px 15px;
+            margin: 10px 40px;
+            border-radius: 5px;
+            font-weight: bold;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* ===== CONTADOR ===== */
+        .contador {
+            text-align: center;
+            color: #666;
+            margin: 10px 0 20px;
+            font-size: 16px;
+        }
+
+        .contador span {
+            font-weight: bold;
+            color: #1e88e5;
+            font-size: 18px;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #999;
+            background: white;
+            border-radius: 10px;
+            margin: 40px;
+        }
+
+        .empty-state i {
+            font-size: 80px;
+            margin-bottom: 20px;
+            color: #ccc;
+        }
+
+        .empty-state h3 {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #999;
+            margin-bottom: 20px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                padding: 20px;
+            }
+
+            .search-bar {
+                width: 100%;
+            }
+
+            .navbar {
+                padding: 10px 20px;
+                justify-content: center;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+
+            .client-area {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .client-info {
+                flex-direction: column;
+            }
+
+            .client-actions {
+                justify-content: center;
+            }
+
+            .alert {
+                margin: 10px 20px;
+            }
+        }
+
+        /* ===== LOADING STATE ===== */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid white;
+            border-radius: 50%;
+            border-right-color: transparent;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body>
+
+<!-- HEADER -->
+<header class="header">
+    <div class="logo">BookNexus</div>
+
+    <div class="search-bar">
+        <input id="searchInput" type="text" placeholder="Buscar livros..." autocomplete="off">
+        <div id="searchDropdown" class="search-results-dropdown"></div>
+    </div>
+
+    <div class="header-actions">
+        <select id="clienteSelector" class="cliente-selector" onchange="selecionarCliente()">
+            <option value="">Selecione seu cliente</option>
+        </select>
+
+        <a href="#" id="carrinhoLink" class="carrinho-link" title="Carrinho">
+            <i class="fa-solid fa-cart-shopping fa-2x"></i>
+        </a>
+
+        <a href="#" id="perfilLink" class="profile-link" title="Minha Conta">
+            <i class="fa-solid fa-circle-user fa-2x"></i>
+        </a>
+    </div>
+</header>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <a href="#">Novidades</a>
+    <a href="#">Ficção</a>
+    <a href="#">Tecnologia</a>
+    <a href="#">Negócios</a>
+    <a href="#">Promoções</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <h1>Descubra novos mundos com a BookNexus</h1>
+    <p>Os melhores livros de tecnologia, negócios e ficção em um só lugar</p>
+    <br>
+    <a href="#" class="btn btn-secondary" onclick="return explorarCatalogo()">Explorar Catálogo</a>
+</section>
+
+<!-- ÁREA DO CLIENTE -->
+<div class="client-area" id="clientArea">
+    <div class="client-info">
+        <span class="client-welcome" id="welcomeMessage">Bem-vindo Visitante!</span>
+    </div>
+    <div class="client-actions" id="clientActions">
+        <a href="#" id="pedidosLink">Meus Pedidos</a>
+        <a href="#" id="trocasLink" onclick="return abrirTrocas();">Minhas Trocas</a>
+    </div>
+</div>
+
+<!-- TÍTULO DA SEÇÃO -->
+<h2 class="section-title">📚 Todos os Livros</h2>
+
+<!-- CONTADOR DE PRODUTOS -->
+<div class="contador" th:if="${not #lists.isEmpty(produtos)}" id="contadorProdutos">
+    <span th:text="${#lists.size(produtos)}"></span> livros disponíveis
+</div>
+
+<!-- GRADE DE PRODUTOS -->
+<div class="grid" id="produtosGrid" th:if="${not #lists.isEmpty(produtos)}">
+    <div class="card" th:each="produto : ${produtos}" th:data-produto-id="${produto.id}">
+        <h3 th:text="${produto.titulo}">Título do Livro</h3>
+        <p class="autor" th:text="'por ' + ${produto.autor}">Autor</p>
+        <p class="editora" th:text="${produto.editora} + ' - ' + ${produto.anoPublicacao}">Editora - Ano</p>
+        <span class="preco" th:text="'R$ ' + ${#numbers.formatDecimal(produto.preco, 1, 2, 'POINT')}">R$ 0,00</span>
+
+        <!-- Condicional para estoque -->
+        <span class="estoque" th:classappend="${produto.estoque < 10} ? 'baixo' : ''"
+              th:text="${produto.estoque} + ' unidades em estoque'">
+            estoque
+        </span>
+
+        <!-- Botão com condicional de estoque -->
+        <button class="btn" th:classappend="${produto.estoque == 0} ? 'btn-disabled' : ''"
+                th:onclick="${produto.estoque > 0} ? 'adicionarAoCarrinho(' + ${produto.id} + ')' : ''"
+                th:title="${produto.estoque == 0} ? 'Fora de estoque' : 'Adicionar ao carrinho'">
+            <i class="fa-solid fa-cart-plus"></i>
+            <span th:text="${produto.estoque == 0} ? 'Indisponível' : 'Adicionar ao Carrinho'">Adicionar</span>
+        </button>
+    </div>
+</div>
+
+<!-- Mensagem quando não há produtos -->
+<div class="empty-state" th:if="${#lists.isEmpty(produtos)}">
+    <i class="fa-solid fa-book-open"></i>
+    <h3>Nenhum livro cadastrado ainda</h3>
+    <p>Em breve teremos novidades para você!</p>
+    <a href="/" class="btn btn-secondary">Voltar para Home</a>
+</div>
+
+<!-- FOOTER -->
+<div style="background: #1e3c72; color: white; text-align: center; padding: 30px; margin-top: 40px;">
+    <p>© 2025 BookNexus - Todos os direitos reservados</p>
+    <p style="margin-top: 5px;">
+        <a th:href="@{/admin}" style="font-size: 12px; color: #aaa; text-decoration: none;">
+            ⚙ Painel Administrativo
+        </a>
+    </p>
+</div>
+
+<script>
+    // Variáveis globais
+    let clienteSelecionado = null;
+    let clienteNome = '';
+
+    // ===== INICIALIZAÇÃO =====
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM carregado, iniciando aplicação...');
+        carregarClientes();
+        inicializarBusca();
+        inicializarLinks();
+
+        // Verifica se há cliente salvo na sessão (via atributo Thymeleaf)
+        const clienteSessao = /*[[${clienteId}]]*/ null;
+        const clienteNomeSessao = /*[[${nomeCliente}]]*/ 'Visitante';
+
+        if (clienteSessao) {
+            clienteSelecionado = clienteSessao;
+            clienteNome = clienteNomeSessao;
+            atualizarInterfaceCliente();
+        }
+    });
+
+    // ===== GERENCIAMENTO DE CLIENTES =====
+    function carregarClientes() {
+        console.log('Carregando clientes...');
+
+        fetch('/admin/clientes/api/para-seletor')
+            .then(response => {
+                console.log('Resposta recebida:', response.status);
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(clientes => {
+                console.log('Clientes carregados:', clientes);
+
+                const selector = document.getElementById('clienteSelector');
+                selector.innerHTML = '<option value="">Selecione seu cliente</option>';
+
+                if (clientes.length === 0) {
+                    console.log('Nenhum cliente encontrado no banco de dados');
+                    const option = document.createElement('option');
+                    option.value = "";
+                    option.textContent = "Nenhum cliente cadastrado";
+                    option.disabled = true;
+                    selector.appendChild(option);
+                    return;
+                }
+
+                clientes.forEach(cliente => {
+                    const option = document.createElement('option');
+                    option.value = cliente.id;
+                    option.textContent = cliente.nome;
+                    selector.appendChild(option);
+                });
+
+                // Se já havia um cliente selecionado, mantém a seleção
+                if (clienteSelecionado) {
+                    selector.value = clienteSelecionado;
+                }
+            })
+            .catch(error => {
+                console.error('Erro detalhado ao carregar clientes:', error);
+                mostrarAlerta('Erro ao carregar clientes. Verifique o console.', 'error');
+
+                // Dados de exemplo para teste (remover em produção)
+                adicionarClientesExemplo();
+            });
+    }
+
+    // Função temporária para teste - REMOVER QUANDO O BACKEND ESTIVER FUNCIONANDO
+    function adicionarClientesExemplo() {
+        console.log('Adicionando clientes de exemplo para teste');
+        const selector = document.getElementById('clienteSelector');
+
+        const clientesExemplo = [
+            { id: 1, nome: "João Silva (exemplo)" },
+            { id: 2, nome: "Maria Santos (exemplo)" },
+            { id: 3, nome: "Pedro Oliveira (exemplo)" }
+        ];
+
+        clientesExemplo.forEach(cliente => {
+            const option = document.createElement('option');
+            option.value = cliente.id;
+            option.textContent = cliente.nome;
+            selector.appendChild(option);
+        });
+    }
+
+    function selecionarCliente() {
+        const selector = document.getElementById('clienteSelector');
+        const novoClienteId = selector.value;
+
+        // Se não selecionou nenhum cliente válido
+        if (!novoClienteId || novoClienteId === "") {
+            clienteSelecionado = null;
+            clienteNome = '';
+            atualizarInterfaceCliente();
+            mostrarAlerta('Nenhum cliente selecionado', 'info');
+            return;
+        }
+
+        const novoClienteNome = selector.options[selector.selectedIndex].text;
+
+        if (novoClienteId === clienteSelecionado) return; // Mesmo cliente
+
+        clienteSelecionado = novoClienteId;
+        clienteNome = novoClienteNome;
+
+        // Atualiza a interface
+        atualizarInterfaceCliente();
+
+        // Salva no backend (se necessário)
+        if (clienteSelecionado) {
+            fetch(`/admin/clientes/api/${clienteSelecionado}/selecionar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        mostrarAlerta(`Cliente selecionado: ${clienteNome}`, 'success');
+                    } else {
+                        throw new Error('Erro na resposta do servidor');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao salvar seleção:', error);
+                    mostrarAlerta('Cliente selecionado com sucesso!', 'success');
+                });
+        }
+    }
+
+    function atualizarInterfaceCliente() {
+        const welcomeMsg = document.getElementById('welcomeMessage');
+        const carrinhoLink = document.getElementById('carrinhoLink');
+        const perfilLink = document.getElementById('perfilLink');
+        const pedidosLink = document.getElementById('pedidosLink');
+
+        if (clienteSelecionado) {
+            welcomeMsg.textContent = `Bem-vindo ${clienteNome}!`;
+
+            // CORRIGIDO: Carrinho (sem ID)
+            carrinhoLink.href = `/carrinho`;
+
+            // CORRIGIDO: "Minha Conta" agora aponta para pedidos do cliente
+            perfilLink.href = `/pedidos/cliente/${clienteSelecionado}`;
+
+            // CORRIGIDO: Pedidos - usando o endpoint correto do PedidoController
+            pedidosLink.href = `/pedidos/cliente/${clienteSelecionado}`;
+
+            // Trocas (mantém ID)
+            document.getElementById('trocasLink').onclick = function() {
+                window.location.href = `/cliente/${clienteSelecionado}/trocas`;
+                return false;
+            };
+
+            // Habilita links
+            carrinhoLink.classList.remove('disabled');
+            perfilLink.classList.remove('disabled');
+            pedidosLink.classList.remove('disabled');
+        } else {
+            welcomeMsg.textContent = 'Bem-vindo Visitante!';
+
+            // Links voltam para página inicial ou ficam desabilitados
+            carrinhoLink.href = '#';
+            perfilLink.href = '#';
+            pedidosLink.href = '#';
+
+            // Adiciona classe disabled para estilizar
+            carrinhoLink.classList.add('disabled');
+            perfilLink.classList.add('disabled');
+            pedidosLink.classList.add('disabled');
+        }
+    }
+
+    function inicializarLinks() {
+        const carrinhoLink = document.getElementById('carrinhoLink');
+        const perfilLink = document.getElementById('perfilLink');
+        const pedidosLink = document.getElementById('pedidosLink');
+
+        carrinhoLink.addEventListener('click', function(e) {
+            if (!clienteSelecionado) {
+                e.preventDefault();
+                mostrarAlerta('Selecione um cliente para acessar o carrinho.', 'info');
+            }
+        });
+
+        perfilLink.addEventListener('click', function(e) {
+            if (!clienteSelecionado) {
+                e.preventDefault();
+                mostrarAlerta('Selecione um cliente para acessar sua conta.', 'info');
+            }
+        });
+
+        pedidosLink.addEventListener('click', function(e) {
+            if (!clienteSelecionado) {
+                e.preventDefault();
+                mostrarAlerta('Selecione um cliente para ver seus pedidos.', 'info');
+            }
+        });
+    }
+
+    function abrirTrocas() {
+        if (!clienteSelecionado) {
+            mostrarAlerta('Selecione um cliente para ver as trocas.', 'info');
+            return false;
+        }
+        window.location.href = `/cliente/${clienteSelecionado}/trocas`;
+        return false;
+    }
+
+    function explorarCatalogo() {
+        window.location.href = '#livros';
+        return false;
+    }
+
+    // ===== CARRINHO =====
+    function adicionarAoCarrinho(produtoId) {
+        if (!clienteSelecionado) {
+            mostrarAlerta('Por favor, selecione um cliente primeiro!', 'error');
+            return;
+        }
+
+        const botao = event.target.closest('.btn');
+        const textoOriginal = botao.innerHTML;
+
+        // Feedback visual de loading
+        botao.classList.add('btn-loading');
+        botao.disabled = true;
+
+        // CORRIGIDO: Endpoint do carrinho
+        fetch(`/carrinho/adicionar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `produtoId=${produtoId}&quantidade=1`
+        })
+            .then(response => {
+                if (response.redirected) {
+                    // Se foi redirecionado para /carrinho, deu certo
+                    window.location.href = response.url;
+                    return;
+                }
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(text); });
+                }
+                // Se chegou aqui, a requisição foi bem sucedida
+                mostrarAlerta('Livro adicionado ao carrinho!', 'success');
+
+                // Redireciona para o carrinho após 1 segundo
+                setTimeout(() => {
+                    window.location.href = '/carrinho';
+                }, 1000);
+
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.quantidadeItens) {
+                    atualizarContadorCarrinho(data.quantidadeItens);
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                botao.classList.remove('btn-loading');
+                botao.innerHTML = textoOriginal;
+                botao.disabled = false;
+                mostrarAlerta('Erro ao adicionar ao carrinho: ' + error.message, 'error');
+            });
+    }
+
+    function atualizarContadorCarrinho(quantidade) {
+        const container = document.querySelector('.carrinho-link');
+        if (!container) return;
+
+        // Remove badge antigo se existir
+        const badgeAntigo = document.querySelector('.carrinho-badge');
+        if (badgeAntigo) badgeAntigo.remove();
+
+        if (quantidade > 0) {
+            // Cria novo badge
+            const badge = document.createElement('span');
+            badge.className = 'carrinho-badge';
+            badge.textContent = quantidade;
+            badge.style.cssText = `
+                position: absolute;
+                top: -8px;
+                right: -8px;
+                background: #e53935;
+                color: white;
+                border-radius: 50%;
+                padding: 2px 6px;
+                font-size: 12px;
+                font-weight: bold;
+                min-width: 18px;
+                text-align: center;
+            `;
+
+            container.style.position = 'relative';
+            container.appendChild(badge);
+        }
+    }
+
+    // ===== BUSCA =====
+    function inicializarBusca() {
+        const input = document.getElementById('searchInput');
+        const dropdown = document.getElementById('searchDropdown');
+
+        if (!input || !dropdown) return;
+
+        let debounceTimer;
+
+        // Fecha dropdown ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (!dropdown.contains(e.target) && !input.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        input.addEventListener('input', () => {
+            const termo = input.value.trim();
+            clearTimeout(debounceTimer);
+
+            if (termo.length < 2) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => buscarLivros(termo), 300);
+        });
+
+        input.addEventListener('focus', () => {
+            if (input.value.trim().length >= 2) {
+                dropdown.style.display = 'block';
+            }
+        });
+    }
+
+    function buscarLivros(termo) {
+        const dropdown = document.getElementById('searchDropdown');
+
+        fetch(`/api/livros/busca?q=${encodeURIComponent(termo)}`)
+            .then(response => response.json())
+            .then(livros => {
+                dropdown.style.display = 'block';
+
+                if (!livros.length) {
+                    dropdown.innerHTML = '<div class="search-empty">Nenhum livro encontrado</div>';
+                    return;
+                }
+
+                const ul = document.createElement('ul');
+                livros.slice(0, 8).forEach(livro => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <a href="/livro/${livro.id}">${livro.titulo}</a>
+                        <span style="font-size:12px; color:#555;">por ${livro.autor}</span>
+                        <strong style="font-size:12px; color:#26a69a;">R$ ${livro.preco ? livro.preco.toFixed(2) : '0,00'}</strong>
+                    `;
+                    ul.appendChild(li);
+                });
+
+                dropdown.innerHTML = '';
+                dropdown.appendChild(ul);
+            })
+            .catch(error => {
+                console.error('Erro na busca:', error);
+                dropdown.innerHTML = '<div class="search-empty">Erro ao buscar livros</div>';
+            });
+    }
+
+    // ===== UTILITÁRIOS =====
+    function mostrarAlerta(mensagem, tipo) {
+        // Remove alertas existentes
+        const alertasExistentes = document.querySelectorAll('.alert');
+        alertasExistentes.forEach(alerta => alerta.remove());
+
+        // Cria novo alerta
+        const alerta = document.createElement('div');
+        alerta.className = `alert alert-${tipo}`;
+        alerta.textContent = mensagem;
+
+        // Insere após o header
+        const header = document.querySelector('.header');
+        header.insertAdjacentElement('afterend', alerta);
+
+        // Remove o alerta após 3 segundos
+        setTimeout(() => {
+            if (alerta.parentNode) alerta.remove();
+        }, 3000);
+    }
+
+    // CSS adicional para estados
+    const style = document.createElement('style');
+    style.textContent = `
+        .disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            cursor: default;
+        }
+
+        .btn-success {
+            background: #28a745 !important;
+        }
+
+        .carrinho-link, .profile-link {
+            position: relative;
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+
+</body>
+</html>
