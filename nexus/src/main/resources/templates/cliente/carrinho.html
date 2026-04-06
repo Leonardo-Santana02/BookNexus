@@ -4,935 +4,1474 @@
     <meta charset="UTF-8">
     <title>Meu Carrinho - BookNexus</title>
 
-    <!-- Font Awesome para ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- ===== META TAGS CSRF =====
+         Necessárias para proteção contra ataques CSRF (Cross-Site Request Forgery)
+         Os tokens são injetados pelo Spring Security e usados em requisições AJAX
+    -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 
+    <!-- ===== BIBLIOTECAS EXTERNAS ===== -->
+    <!-- Bootstrap CSS - Framework CSS responsivo -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons - Conjunto de ícones vetoriais -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- ===== BIBLIOTECAS JAVASCRIPT ===== -->
+    <!-- jQuery - Biblioteca para manipulação DOM e requisições AJAX -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS - Componentes interativos (modais, collapses, etc) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery Mask - Máscaras para campos de formulário (CEP, etc) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
+    <!-- ===== ESTILOS PERSONALIZADOS ===== -->
     <style>
-        /* ===== RESET ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* ===== VARIÁVEIS DE CORES (CSS CUSTOM PROPERTIES) ===== */
+        :root {
+            --brand-blue: #1e88e5;      /* Azul principal da marca */
+            --brand-blue-hover: #1565c0; /* Azul mais escuro para hover */
+            --brand-teal: #26a69a;       /* Verde-água para gradiente */
+            --brand-teal-hover: #1b8a80; /* Verde-água escuro para hover */
         }
 
-        body {
-            font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
-            background: #f4f9fb;
-            color: #333;
+        /* ===== GRADIENTES E BOTÕES ===== */
+        /* Fundo gradiente para elementos principais */
+        .bg-primary { background: linear-gradient(135deg, var(--brand-blue), var(--brand-teal)) !important; }
+
+        /* Botão primário com gradiente e efeito de hover */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-blue), var(--brand-teal)) !important;
+            border: none !important;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--brand-blue-hover), var(--brand-teal-hover)) !important;
+            transform: translateY(-1px);           /* Leve elevação no hover */
+            box-shadow: 0 4px 12px rgba(30,136,229,0.3); /* Sombra suave */
         }
 
-        /* ===== HEADER ===== */
-        .header {
-            background: linear-gradient(90deg, #1e88e5, #26a69a);
-            padding: 15px 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            color: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        /* Botão outline (borda apenas) */
+        .btn-outline-primary {
+            color: var(--brand-blue) !important;
+            border-color: var(--brand-blue) !important;
+        }
+        .btn-outline-primary:hover {
+            background: var(--brand-blue) !important;
+            border-color: var(--brand-blue) !important;
+            color: white !important;
         }
 
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        /* Cores de texto e borda */
+        .text-primary { color: var(--brand-blue) !important; }
+        .border-primary { border-color: var(--brand-blue) !important; }
+
+        /* Checkbox customizado */
+        .form-check-input:checked {
+            background-color: var(--brand-blue) !important;
+            border-color: var(--brand-blue) !important;
         }
 
-        .logo a {
-            color: white;
-            text-decoration: none;
+        /* Abas (tabs) */
+        .nav-tabs .nav-link { color: var(--brand-blue); }
+        .nav-tabs .nav-link.active {
+            color: var(--brand-blue) !important;
+            border-color: var(--brand-blue) var(--brand-blue) #fff !important;
         }
 
-        .logo i {
-            font-size: 28px;
-        }
+        /* Links */
+        a { color: var(--brand-blue); text-decoration: none; }
+        a:hover { color: var(--brand-blue-hover); }
 
-        .search-bar {
-            flex: 1;
-            max-width: 500px;
-            margin: 0 30px;
-        }
+        /* ===== COMPONENTES PERSONALIZADOS ===== */
+        /* Resumo do carrinho - fixo no topo durante rolagem */
+        .cart-summary { position: sticky; top: 20px; }
 
-        .search-bar form {
-            display: flex;
-            background: white;
-            border-radius: 30px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
+        /* Mensagens de validação de formulário */
+        .is-invalid + .invalid-feedback { display: block; }
 
-        .search-bar input {
-            flex: 1;
-            padding: 12px 20px;
-            border: none;
-            outline: none;
-            font-size: 15px;
-        }
-
-        .search-bar button {
-            background: white;
-            border: none;
-            padding: 0 20px;
-            color: #1e88e5;
-            cursor: pointer;
-            transition: 0.3s;
-            font-size: 18px;
-        }
-
-        .search-bar button:hover {
-            background: #f0f0f0;
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-        }
-
-        .header-actions a {
-            color: white;
-            text-decoration: none;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: 0.3s;
-            position: relative;
-        }
-
-        .header-actions a:hover {
-            opacity: 0.8;
-            transform: translateY(-2px);
-        }
-
-        .cart-badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #e53935;
-            color: white;
-            font-size: 11px;
-            font-weight: bold;
-            min-width: 18px;
-            height: 18px;
-            border-radius: 9px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 5px;
-        }
-
-        /* ===== NAVBAR ===== */
-        .navbar {
-            background: white;
-            padding: 12px 40px;
-            display: flex;
-            gap: 35px;
-            border-bottom: 1px solid #e0e0e0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            position: sticky;
-            top: 80px;
-            z-index: 99;
-            overflow-x: auto;
-            white-space: nowrap;
-        }
-
-        .navbar a {
-            text-decoration: none;
-            color: #333;
-            font-weight: 600;
-            font-size: 15px;
-            transition: 0.3s;
-            padding: 5px 0;
-            border-bottom: 2px solid transparent;
-        }
-
-        .navbar a:hover {
-            color: #1e88e5;
-            border-bottom-color: #1e88e5;
-        }
-
-        /* ===== BREADCRUMB ===== */
-        .breadcrumb {
-            padding: 20px 40px;
-            background: white;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .breadcrumb a {
-            color: #1e88e5;
-            text-decoration: none;
-        }
-
-        .breadcrumb span {
-            color: #666;
-        }
-
-        /* ===== CONTEÚDO PRINCIPAL ===== */
-        .content {
-            padding: 40px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .content h1 {
-            font-size: 32px;
-            color: #1e3c72;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .content h1 i {
-            color: #1e88e5;
-        }
-
-        /* ===== CARRINHO GRID ===== */
-        .cart-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 30px;
-        }
-
-        /* ===== LISTA DE PRODUTOS ===== */
-        .cart-items {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-        }
-
-        .cart-header {
-            display: grid;
-            grid-template-columns: 3fr 1fr 1fr 1fr;
-            padding: 15px 0;
-            border-bottom: 2px solid #eef2f6;
-            font-weight: 600;
-            color: #1e3c72;
-        }
-
-        .cart-item {
-            display: grid;
-            grid-template-columns: 3fr 1fr 1fr 1fr;
-            padding: 20px 0;
-            border-bottom: 1px solid #eef2f6;
-            align-items: center;
-        }
-
-        .cart-item:last-child {
-            border-bottom: none;
-        }
-
-        .product-info {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
+        /* Imagem placeholder do produto */
         .product-image {
-            width: 80px;
-            height: 100px;
+            width: 60px;
+            height: 80px;
             background: linear-gradient(135deg, #e3f2fd, #bbdefb);
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #1e88e5;
-            font-size: 40px;
+            color: var(--brand-blue);
+            font-size: 30px;
         }
 
-        .product-details h3 {
-            font-size: 18px;
-            color: #1e3c72;
-            margin-bottom: 5px;
+        /* Alinhamento vertical para tabela do carrinho */
+        .table-cart th, .table-cart td {
+            vertical-align: middle;
         }
 
-        .product-details p {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 5px;
+        /* Input de quantidade */
+        .quantity-input {
+            width: 70px;
+            text-align: center;
         }
 
-        .product-details .remove-link {
-            color: #e53935;
-            font-size: 13px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .product-details .remove-link:hover {
-            text-decoration: underline;
-        }
-
-        /* ===== QUANTIDADE ===== */
+        /* Controles de quantidade (+ / -) */
         .quantity-control {
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-
-        .quantity-btn {
-            width: 30px;
-            height: 30px;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-            background: white;
-            color: #1e88e5;
-            cursor: pointer;
-            transition: 0.3s;
-            display: flex;
-            align-items: center;
             justify-content: center;
+            gap: 5px;
         }
 
-        .quantity-btn:hover {
-            background: #1e88e5;
-            color: white;
-            border-color: #1e88e5;
-        }
-
-        .quantity-input {
-            width: 50px;
-            text-align: center;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 5px;
-        }
-
-        .item-price {
-            font-weight: 600;
-            color: #26a69a;
-        }
-
-        .item-total {
-            font-weight: 700;
-            color: #1e3c72;
-        }
-
-        /* ===== RESUMO DO PEDIDO ===== */
-        .cart-summary {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-            height: fit-content;
-            position: sticky;
-            top: 180px;
-        }
-
-        .summary-title {
-            font-size: 20px;
-            color: #1e3c72;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #eef2f6;
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            color: #555;
-        }
-
-        .summary-row.total {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 2px solid #eef2f6;
-            font-size: 18px;
-            font-weight: 700;
-            color: #1e3c72;
-        }
-
-        .summary-row.frete {
-            background: #e3f2fd;
-            padding: 10px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-
-        .summary-row.frete i {
-            color: #1e88e5;
-        }
-
-        .cupom-form {
-            margin: 20px 0;
-            display: flex;
-            gap: 10px;
-        }
-
-        .cupom-form input {
-            flex: 1;
-            padding: 10px 15px;
-            border: 2px solid #e0e7ff;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .cupom-form button {
-            padding: 10px 20px;
-            background: #26a69a;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .cupom-form button:hover {
-            background: #1b8a80;
-        }
-
-        /* ===== BOTÕES ===== */
-        .btn {
-            padding: 12px 30px;
-            border-radius: 30px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            justify-content: center;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #1e88e5, #26a69a);
-            color: white;
-            width: 100%;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(30,136,229,0.3);
-        }
-
-        .btn-secondary {
-            background: white;
-            color: #1e88e5;
-            border: 2px solid #1e88e5;
-        }
-
-        .btn-secondary:hover {
-            background: #1e88e5;
-            color: white;
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: #666;
-            border: 1px solid #ddd;
-        }
-
-        .btn-outline:hover {
-            background: #f5f5f5;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 30px;
-            justify-content: space-between;
-        }
-
-        /* ===== CARRINHO VAZIO ===== */
-        .empty-cart {
-            text-align: center;
-            padding: 60px 20px;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-        }
-
-        .empty-cart i {
-            font-size: 80px;
-            color: #ddd;
-            margin-bottom: 20px;
-        }
-
-        .empty-cart h2 {
-            color: #1e3c72;
-            margin-bottom: 10px;
-        }
-
-        .empty-cart p {
-            color: #666;
-            margin-bottom: 30px;
-        }
-
-        /* ===== MENSAGENS ===== */
-        .alert {
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
+        /* ===== ALERTAS PERSONALIZADOS ===== */
+        /* Cada alerta tem uma borda lateral colorida para destaque */
         .alert-success {
-            background: #d4edda;
+            background-color: #d4edda;
             color: #155724;
             border-left: 4px solid #28a745;
         }
-
-        .alert-warning {
-            background: #fff3cd;
-            color: #856404;
-            border-left: 4px solid #ffc107;
-        }
-
-        .alert-error {
-            background: #f8d7da;
+        .alert-danger {
+            background-color: #f8d7da;
             color: #721c24;
             border-left: 4px solid #dc3545;
         }
-
-        /* ===== FOOTER ===== */
-        .footer {
-            background: #1e3c72;
-            color: white;
-            padding: 60px 40px 30px;
-            margin-top: 60px;
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
         }
 
-        .footer-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 40px;
-            max-width: 1200px;
-            margin: 0 auto;
+        /* Estilo para campo de código de cupom (monospace para melhor legibilidade) */
+        .cupom-code-input {
+            font-family: monospace;
+            letter-spacing: 1px;
         }
 
-        .footer-col h4 {
-            margin-bottom: 20px;
-            font-size: 18px;
-        }
-
-        .footer-col a {
-            display: block;
-            color: rgba(255,255,255,0.8);
-            text-decoration: none;
-            margin-bottom: 10px;
-            transition: 0.3s;
-        }
-
-        .footer-col a:hover {
-            color: white;
-            transform: translateX(5px);
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: 40px;
-            margin-top: 40px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.6);
-            font-size: 14px;
-        }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 15px;
-                padding: 15px 20px;
-            }
-
-            .search-bar {
-                max-width: 100%;
-                margin: 10px 0;
-            }
-
-            .content {
-                padding: 20px;
-            }
-
-            .cart-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .cart-header {
-                display: none;
-            }
-
-            .cart-item {
-                grid-template-columns: 1fr;
-                gap: 15px;
-                padding: 20px;
-                border: 1px solid #eef2f6;
-                border-radius: 12px;
-                margin-bottom: 15px;
-            }
-
-            .product-info {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .quantity-control {
-                justify-content: center;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
+        /* Spinner pequeno para loading states */
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+            border-width: 0.15em;
         }
     </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<header class="header">
-    <div class="logo">
-        <a href="/home">
-            <i class="fa-solid fa-book-open"></i>
-            BookNexus
-        </a>
-    </div>
-
-    <div class="search-bar">
-        <form action="/buscar" method="get">
-            <input type="text" name="q" placeholder="Buscar livros...">
-            <button type="submit">
-                <i class="fa-solid fa-search"></i>
-            </button>
-        </form>
-    </div>
-
-    <div class="header-actions">
-        <a href="/carrinho" class="carrinho-link" title="Carrinho">
-            <i class="fa-solid fa-cart-shopping fa-xl"></i>
-            <span class="cart-badge" th:if="${carrinhoQuantidade > 0}" th:text="${carrinhoQuantidade}">3</span>
-        </a>
-
-        <a href="/cliente/pedidos" class="profile-link" title="Minha Conta">
-            <i class="fa-solid fa-circle-user fa-2xl"></i>
-        </a>
-    </div>
-</header>
-
-<!-- BREADCRUMB -->
-<div class="breadcrumb">
-    <a href="/home">Home</a> <i class="fa-solid fa-chevron-right" style="margin: 0 10px; color: #999;"></i>
-    <span>Meu Carrinho</span>
-</div>
-
-<!-- CONTEÚDO PRINCIPAL -->
-<div class="content">
-
-    <!-- MENSAGENS -->
-    <div th:if="${mensagem}" class="alert alert-success">
-        <i class="fa-solid fa-check-circle"></i>
-        <span th:text="${mensagem}"></span>
-    </div>
-
-    <div th:if="${erro}" class="alert alert-error">
-        <i class="fa-solid fa-exclamation-circle"></i>
-        <span th:text="${erro}"></span>
-    </div>
-
-    <!-- TÍTULO DA PÁGINA -->
-    <h1>
-        <i class="fa-solid fa-cart-shopping"></i>
-        Meu Carrinho
-    </h1>
-
-    <!-- VERIFICA SE CARRINHO ESTÁ VAZIO -->
-    <div th:if="${carrinhoVazio}" class="empty-cart">
-        <i class="fa-solid fa-cart-shopping"></i>
-        <h2>Seu carrinho está vazio</h2>
-        <p>Explore nossos livros e encontre sua próxima leitura!</p>
-        <a href="/home" class="btn btn-primary">
-            <i class="fa-solid fa-book-open"></i> Continuar Comprando
-        </a>
-    </div>
-
-    <!-- CARRINHO COM PRODUTOS -->
-    <div th:unless="${carrinhoVazio}" class="cart-grid">
-
-        <!-- LISTA DE PRODUTOS -->
-        <div class="cart-items">
-            <div class="cart-header">
-                <div>Produto</div>
-                <div>Quantidade</div>
-                <div>Preço</div>
-                <div>Total</div>
-            </div>
-
-            <!-- ITEM 1 -->
-            <div class="cart-item">
-                <div class="product-info">
-                    <div class="product-image">
-                        <i class="fa-solid fa-book"></i>
-                    </div>
-                    <div class="product-details">
-                        <h3>Clean Code</h3>
-                        <p>Robert C. Martin</p>
-                        <a href="#" class="remove-link" onclick="return confirmarRemocao(1)">
-                            <i class="fa-regular fa-trash-can"></i> Remover
-                        </a>
-                    </div>
-                </div>
-
-                <div class="quantity-control">
-                    <button class="quantity-btn" onclick="alterarQuantidade(1, -1)">
-                        <i class="fa-solid fa-minus"></i>
-                    </button>
-                    <input type="number" class="quantity-input" value="1" min="1" max="99" readonly>
-                    <button class="quantity-btn" onclick="alterarQuantidade(1, 1)">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                </div>
-
-                <div class="item-price">R$ 79,90</div>
-                <div class="item-total">R$ 79,90</div>
-            </div>
-
-            <!-- ITEM 2 -->
-            <div class="cart-item">
-                <div class="product-info">
-                    <div class="product-image">
-                        <i class="fa-solid fa-book"></i>
-                    </div>
-                    <div class="product-details">
-                        <h3>Arquitetura Limpa</h3>
-                        <p>Robert C. Martin</p>
-                        <a href="#" class="remove-link" onclick="return confirmarRemocao(2)">
-                            <i class="fa-regular fa-trash-can"></i> Remover
-                        </a>
-                    </div>
-                </div>
-
-                <div class="quantity-control">
-                    <button class="quantity-btn" onclick="alterarQuantidade(2, -1)">
-                        <i class="fa-solid fa-minus"></i>
-                    </button>
-                    <input type="number" class="quantity-input" value="2" min="1" max="99" readonly>
-                    <button class="quantity-btn" onclick="alterarQuantidade(2, 1)">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                </div>
-
-                <div class="item-price">R$ 89,90</div>
-                <div class="item-total">R$ 179,80</div>
-            </div>
-
-            <!-- ITEM 3 -->
-            <div class="cart-item">
-                <div class="product-info">
-                    <div class="product-image">
-                        <i class="fa-solid fa-book"></i>
-                    </div>
-                    <div class="product-details">
-                        <h3>Domain Driven Design</h3>
-                        <p>Eric Evans</p>
-                        <a href="#" class="remove-link" onclick="return confirmarRemocao(3)">
-                            <i class="fa-regular fa-trash-can"></i> Remover
-                        </a>
-                    </div>
-                </div>
-
-                <div class="quantity-control">
-                    <button class="quantity-btn" onclick="alterarQuantidade(3, -1)">
-                        <i class="fa-solid fa-minus"></i>
-                    </button>
-                    <input type="number" class="quantity-input" value="1" min="1" max="99" readonly>
-                    <button class="quantity-btn" onclick="alterarQuantidade(3, 1)">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                </div>
-
-                <div class="item-price">R$ 99,90</div>
-                <div class="item-total">R$ 99,90</div>
-            </div>
+<div class="container mt-4 mb-5">
+    <!-- ===== CABEÇALHO ===== -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="bi bi-cart3"></i> Meu Carrinho</h1>
         </div>
-
-        <!-- RESUMO DO PEDIDO -->
-        <div class="cart-summary">
-            <h3 class="summary-title">Resumo do Pedido</h3>
-
-            <div class="summary-row">
-                <span>Subtotal:</span>
-                <span>R$ 359,60</span>
-            </div>
-
-            <div class="summary-row">
-                <span>Desconto:</span>
-                <span>- R$ 0,00</span>
-            </div>
-
-            <div class="summary-row frete">
-                <span><i class="fa-solid fa-truck"></i> Frete:</span>
-                <span>R$ 15,90</span>
-            </div>
-
-            <!-- CUPOM DE DESCONTO -->
-            <div class="cupom-form">
-                <input type="text" placeholder="Cupom de desconto">
-                <button type="button">Aplicar</button>
-            </div>
-
-            <div class="summary-row total">
-                <span>Total:</span>
-                <span>R$ 375,50</span>
-            </div>
-
-            <div class="summary-row" style="font-size: 12px; color: #999; margin-top: 10px;">
-                <span><i class="fa-regular fa-credit-card"></i> Em até 6x sem juros</span>
-            </div>
-
-            <!-- BOTÕES DE AÇÃO -->
-            <a href="/pagamento" class="btn btn-primary" style="margin: 20px 0;">
-                <i class="fa-solid fa-lock"></i> Ir para Pagamento
-            </a>
-
-            <a href="/home" class="btn btn-outline" style="width: 100%;">
-                <i class="fa-solid fa-arrow-left"></i> Continuar Comprando
+        <div class="col-md-4 text-end">
+            <a href="/home" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar à Loja
             </a>
         </div>
     </div>
 
-    <!-- PRODUTOS RECOMENDADOS -->
-    <div th:unless="${carrinhoVazio}" style="margin-top: 60px;">
-        <h2 style="color: #1e3c72; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-            <i class="fa-regular fa-star"></i>
-            Quem viu este produto, também comprou:
-        </h2>
+    <!-- ===== CONTÊINER DE ALERTAS =====
+         Mensagens dinâmicas são inseridas aqui via JavaScript
+    -->
+    <div id="alertContainer"></div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
-            <!-- RECOMENDAÇÃO 1 -->
-            <div class="cart-item" style="padding: 20px; border: 1px solid #eef2f6; border-radius: 12px; background: white;">
-                <div class="product-info" style="flex-direction: column; text-align: center;">
-                    <div class="product-image" style="margin: 0 auto;">
-                        <i class="fa-solid fa-book"></i>
+    <!-- ===== SELEÇÃO DE CLIENTE =====
+         Permite ao administrador selecionar qual cliente está comprando
+         (útil para demonstração/atendimento)
+    -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="m-0"><i class="bi bi-person-badge"></i> Selecione o Cliente</h5>
+        </div>
+        <div class="card-body">
+            <select id="clienteSelector" class="form-select" onchange="selecionarCliente()">
+                <option value="">Selecione seu cliente</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- ===== CONTEÚDO PRINCIPAL (exibido apenas se cliente selecionado) ===== -->
+    <div th:if="${cliente != null}">
+
+        <!-- INFORMAÇÕES DO CLIENTE -->
+        <div class="alert alert-info mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-person-circle"></i>
+                    <strong>Cliente:</strong> <span th:text="${cliente.nome}"></span>
+                    <span th:text="'(' + ${cliente.email} + ')'"></span>
+                </div>
+                <a class="btn btn-outline-primary btn-sm" th:href="@{'/pedidos/cliente/' + ${cliente.id}}">
+                    <i class="bi bi-list-ul"></i> Ver pedidos
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- ===== COLUNA ESQUERDA: ITENS DO CARRINHO ===== -->
+            <div class="col-lg-8">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="m-0"><i class="bi bi-cart-fill"></i> Itens do Carrinho</h5>
+                        <!-- Botão limpar carrinho (aparece apenas se houver itens) -->
+                        <button class="btn btn-light btn-sm" onclick="limparCarrinho()"
+                                th:if="${carrinho != null && carrinho.itens != null && !#lists.isEmpty(carrinho.itens)}">
+                            <i class="bi bi-trash"></i> Limpar Carrinho
+                        </button>
                     </div>
-                    <div class="product-details">
-                        <h3 style="font-size: 16px;">Refactoring</h3>
-                        <p style="font-size: 13px;">Martin Fowler</p>
-                        <span class="item-price">R$ 109,90</span>
-                        <a href="/carrinho/adicionar/4" class="btn btn-secondary" style="margin-top: 10px; padding: 8px 15px; font-size: 13px;">
-                            <i class="fa-solid fa-cart-plus"></i> Adicionar
-                        </a>
+                    <div class="card-body">
+
+                        <!-- CARRINHO COM ITENS -->
+                        <div th:if="${carrinho != null && carrinho.itens != null && !#lists.isEmpty(carrinho.itens)}">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-cart">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th class="text-center" style="width: 140px">Quantidade</th>
+                                        <th class="text-end">Preço</th>
+                                        <th class="text-end">Total</th>
+                                        <th class="text-center" style="width: 50px"></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="itensCarrinhoBody">
+                                    <!-- Cada item do carrinho é renderizado pelo Thymeleaf -->
+                                    <tr th:each="item : ${carrinho.itens}" th:data-produto-id="${item.produto.id}">
+                                        <td data-label="Produto">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="product-image">
+                                                    <i class="bi bi-book"></i>
+                                                </div>
+                                                <div>
+                                                    <strong th:text="${item.produto.titulo}">Título do Livro</strong>
+                                                    <br>
+                                                    <small class="text-muted" th:text="'por ' + ${item.produto.autor}">Autor</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td data-label="Quantidade" class="text-center">
+                                            <div class="quantity-control">
+                                                <button class="btn btn-outline-secondary btn-sm quantity-minus" th:data-produto-id="${item.produto.id}">
+                                                    <i class="bi bi-dash"></i>
+                                                </button>
+                                                <input type="number" class="form-control form-control-sm text-center quantity-input"
+                                                       min="1" th:value="${item.quantidade}" readonly>
+                                                <button class="btn btn-outline-secondary btn-sm quantity-plus" th:data-produto-id="${item.produto.id}">
+                                                    <i class="bi bi-plus"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td data-label="Preço" class="text-end" th:text="'R$ ' + ${#numbers.formatDecimal(item.produto.preco, 1, 2, 'POINT')}">
+                                            R$ 0,00
+                                        </td>
+                                        <td data-label="Total" class="text-end fw-bold text-primary"
+                                            th:text="'R$ ' + ${#numbers.formatDecimal(item.precoFinal, 1, 2, 'POINT')}">
+                                            R$ 0,00
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-danger btn-sm remove-item" th:data-produto-id="${item.produto.id}" title="Remover">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                    <tfoot class="table-light">
+                                    <!-- Subtotal -->
+                                    <tr>
+                                        <th colspan="3" class="text-end">Subtotal:</th>
+                                        <th class="text-end" id="subtotalValue" th:text="${'R$ ' + #numbers.formatDecimal(carrinho.subtotal, 1, 2, 'POINT')}">R$ 0,00</th>
+                                        <th></th>
+                                    </tr>
+                                    <!-- Desconto (aparece apenas se > 0) -->
+                                    <tr id="descontoRow" th:if="${carrinho.descontoTotal > 0}">
+                                        <th colspan="3" class="text-end">Descontos:</th>
+                                        <th class="text-end text-success" id="descontoValue" th:text="${'- R$ ' + #numbers.formatDecimal(carrinho.descontoTotal, 1, 2, 'POINT')}">- R$ 0,00</th>
+                                        <th></th>
+                                    </tr>
+                                    <!-- Total -->
+                                    <tr>
+                                        <th colspan="3" class="text-end">Total:</th>
+                                        <th class="text-end fw-bold" id="totalValue" th:text="${'R$ ' + #numbers.formatDecimal(carrinho.total, 1, 2, 'POINT')}">R$ 0,00</th>
+                                        <th></th>
+                                    </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- CARRINHO VAZIO -->
+                        <div th:if="${carrinho == null || carrinho.itens == null || #lists.isEmpty(carrinho.itens)}" class="text-center py-5">
+                            <i class="bi bi-cart-x" style="font-size: 4rem; color: #ccc;"></i>
+                            <h5 class="mt-3">Seu carrinho está vazio!</h5>
+                            <p class="text-muted">Adicione produtos para continuar.</p>
+                            <a href="/home" class="btn btn-primary mt-2">
+                                <i class="bi bi-book"></i> Explorar livros
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- RECOMENDAÇÃO 2 -->
-            <div class="cart-item" style="padding: 20px; border: 1px solid #eef2f6; border-radius: 12px; background: white;">
-                <div class="product-info" style="flex-direction: column; text-align: center;">
-                    <div class="product-image" style="margin: 0 auto;">
-                        <i class="fa-solid fa-book"></i>
+            <!-- ===== COLUNA DIREITA: CHECKOUT =====
+                 Exibido apenas quando o carrinho tem itens
+            -->
+            <div class="col-lg-4" th:if="${carrinho != null && carrinho.itens != null && !#lists.isEmpty(carrinho.itens)}">
+                <div class="card shadow-sm cart-summary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="m-0"><i class="bi bi-credit-card"></i> Finalizar Compra</h5>
                     </div>
-                    <div class="product-details">
-                        <h3 style="font-size: 16px;">O Programador Pragmático</h3>
-                        <p style="font-size: 13px;">David Thomas</p>
-                        <span class="item-price">R$ 89,90</span>
-                        <a href="/carrinho/adicionar/5" class="btn btn-secondary" style="margin-top: 10px; padding: 8px 15px; font-size: 13px;">
-                            <i class="fa-solid fa-cart-plus"></i> Adicionar
-                        </a>
+                    <div class="card-body">
+
+                        <!-- ===== SEÇÃO DE CUPONS ===== -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="card-title"><i class="bi bi-ticket-perforated"></i> Cupom de Desconto</h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="abrirModalCupons()">
+                                <i class="bi bi-ticket"></i> Meus Cupons
+                            </button>
+                        </div>
+
+                        <!-- Campo para código de cupom manual -->
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <input type="text" id="codigoCupomManual" class="form-control cupom-code-input"
+                                       placeholder="Digite o código do cupom (ex: PROMO10, TROCA-XXXX)" maxlength="50">
+                                <button id="aplicarCupomBtn" class="btn btn-primary" type="button">
+                                    <i class="bi bi-ticket-perforated"></i> Aplicar
+                                </button>
+                            </div>
+                            <small class="text-muted">Digite o código do cupom promocional ou de troca</small>
+                        </div>
+
+                        <!-- Cupons já aplicados (dinâmico via JavaScript) -->
+                        <div id="cuponsAplicadosContainer">
+                            <div th:if="${carrinho != null && carrinho.cupons != null && !#lists.isEmpty(carrinho.cupons)}">
+                                <hr>
+                                <h6>Cupons aplicados:</h6>
+                                <ul class="list-group mb-3" id="cuponsAplicadosList">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center"
+                                        th:each="cupom : ${carrinho.cupons}" th:attr="data-cupom-id=${cupom.id}">
+                                        <span th:text="${cupom.codigo}"></span>
+                                        <span>
+                                            <span class="badge bg-success" th:text="${cupom.tipo == 'PERCENTUAL' ? cupom.valor + '%' : '- R$ ' + #numbers.formatDecimal(cupom.valor, 1, 2, 'POINT')}"></span>
+                                            <button class="btn btn-sm btn-danger ms-2 remove-cupom" th:data-cupom-id="${cupom.id}" title="Remover">
+                                                <i class="bi bi-x"></i>
+                                            </button>
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- ===== SEÇÃO DE ENDEREÇO DE ENTREGA ===== -->
+                        <div class="mb-3">
+                            <h6><i class="bi bi-geo-alt"></i> Endereço de Entrega</h6>
+
+                            <!-- Seleção de endereço existente -->
+                            <div class="mb-3">
+                                <select id="enderecoSelector" class="form-select">
+                                    <option value="">Selecione um endereço...</option>
+                                    <option th:each="endereco : ${cliente.enderecos}"
+                                            th:if="${endereco.enderecoEntrega}"
+                                            th:value="${endereco.id}"
+                                            th:text="${endereco.tipoLogradouro.descricao + ' ' + endereco.rua + ', ' + endereco.numero + ' - ' + endereco.cidade + '/' + endereco.uf.sigla}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Botão para cadastrar novo endereço (collapse) -->
+                            <button class="btn btn-outline-primary w-100 mb-3" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#novoEnderecoForm" aria-expanded="false">
+                                <i class="bi bi-plus-circle"></i> Cadastrar novo endereço
+                            </button>
+
+                            <!-- Formulário de novo endereço (inicialmente colapsado) -->
+                            <div class="collapse" id="novoEnderecoForm">
+                                <div class="card card-body">
+                                    <form id="formNovoEndereco" novalidate>
+                                        <div class="row g-2">
+                                            <div class="col-md-4">
+                                                <label class="form-label small">Tipo</label>
+                                                <select class="form-select form-select-sm" id="tipoLogradouro" required>
+                                                    <option value="">Selecione</option>
+                                                    <option th:each="tipo : ${T(br.com.java.e_commerce.nexus.model.enums.TipoLogradouro).values()}"
+                                                            th:value="${tipo}" th:text="${tipo.descricao}"></option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label class="form-label small">Logradouro</label>
+                                                <input type="text" class="form-control form-control-sm" id="rua" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label small">Número</label>
+                                                <input type="text" class="form-control form-control-sm" id="numero" required>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label class="form-label small">Bairro</label>
+                                                <input type="text" class="form-control form-control-sm" id="bairro" required>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label class="form-label small">Cidade</label>
+                                                <input type="text" class="form-control form-control-sm" id="cidade" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label small">UF</label>
+                                                <input type="text" class="form-control form-control-sm" id="uf" maxlength="2" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small">CEP</label>
+                                                <input type="text" class="form-control form-control-sm" id="cep" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small">Observações</label>
+                                                <input type="text" class="form-control form-control-sm" id="observacoes">
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="flagCobranca">
+                                                    <label class="form-check-label small" for="flagCobranca">
+                                                        Este endereço também é para cobrança
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <button type="button" class="btn btn-primary btn-sm w-100 mt-2" id="salvarEnderecoBtn" disabled>
+                                                    Salvar Endereço
+                                                </button>
+                                                <div id="msgNovoEndereco" class="mt-2 small text-danger"></div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- ===== RESUMO DE VALORES (DINÂMICO) ===== -->
+                        <div class="alert alert-info mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Subtotal:</span>
+                                <strong id="resumoSubtotal" th:text="${'R$ ' + #numbers.formatDecimal(carrinho.subtotal, 1, 2, 'POINT')}">R$ 0,00</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2" id="resumoDescontoRow" th:if="${carrinho.descontoTotal > 0}">
+                                <span>Desconto:</span>
+                                <strong class="text-success" id="resumoDesconto" th:text="${'- R$ ' + #numbers.formatDecimal(carrinho.descontoTotal, 1, 2, 'POINT')}">- R$ 0,00</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <span>Frete:</span>
+                                <strong id="resumoFrete">R$ 0,00</strong>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span><strong>Total:</strong></span>
+                                <strong id="resumoTotal">R$ 0,00</strong>
+                            </div>
+                        </div>
+
+                        <!-- ===== FORMULÁRIO PARA IR AO PAGAMENTO =====
+                             Contém token CSRF e campo do endereço selecionado
+                        -->
+                        <form method="POST" action="/carrinho/criar-pedido" id="formIrParaPagamento">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <input type="hidden" name="enderecoId" id="enderecoIdInput" value="">
+                            <button type="submit" class="btn btn-primary w-100" id="irParaPagamentoBtn" disabled>
+                                <i class="bi bi-credit-card"></i> Ir para Pagamento
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- ===== AVISO: CLIENTE NÃO SELECIONADO ===== -->
+    <div th:if="${cliente == null}" class="alert alert-warning text-center py-5">
+        <i class="bi bi-person-x" style="font-size: 3rem;"></i>
+        <h4 class="mt-3">Nenhum cliente selecionado</h4>
+        <p>Por favor, selecione um cliente para visualizar o carrinho de compras.</p>
+    </div>
 </div>
 
-<!-- FOOTER -->
-<footer class="footer">
-    <div class="footer-grid">
-        <div class="footer-col">
-            <h4>BookNexus</h4>
-            <a href="/sobre">Sobre nós</a>
-            <a href="/contato">Contato</a>
-            <a href="/trabalhe-conosco">Trabalhe conosco</a>
-        </div>
-        <div class="footer-col">
-            <h4>Ajuda</h4>
-            <a href="/faq">Perguntas frequentes</a>
-            <a href="/trocas">Política de trocas</a>
-            <a href="/entrega">Prazos de entrega</a>
-        </div>
-        <div class="footer-col">
-            <h4>Minha conta</h4>
-            <a>Meus dados</a>
-            <a>Meus pedidos</a>
-            <a>Meus favoritos</a>
+<!-- ===== MODAL DE CUPONS DO CLIENTE =====
+     Exibe todos os cupons disponíveis para o cliente em um popup
+-->
+<div class="modal fade" id="cuponsModal" tabindex="-1" aria-labelledby="cuponsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="cuponsModalLabel"><i class="bi bi-ticket-perforated"></i> Meus Cupons</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="cuponsModalBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">Carregando seus cupons...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
         </div>
     </div>
-    <div class="footer-bottom">
-        <p>© 2024 BookNexus. Todos os direitos reservados.</p>
-    </div>
-</footer>
+</div>
 
-<!-- SCRIPTS -->
-<script>
-    // Funções para interatividade do carrinho
-    function alterarQuantidade(id, delta) {
-        const input = event.target.closest('.cart-item').querySelector('.quantity-input');
-        let valor = parseInt(input.value) + delta;
-        if (valor < 1) valor = 1;
-        if (valor > 99) valor = 99;
-        input.value = valor;
+<!-- ===== JAVASCRIPT PRINCIPAL (Thymeleaf inline) ===== -->
+<script th:inline="javascript">
+    /* ============================================================
+     * VARIÁVEIS GLOBAIS
+     * ============================================================ */
 
-        // Aqui você faria uma chamada AJAX para atualizar o carrinho no backend
-        console.log('Atualizar quantidade do produto', id, 'para', valor);
+    // ID do cliente atual (injetado pelo Thymeleaf)
+    let clienteAtual = /*[[${cliente != null ? cliente.id : null}]]*/ null;
 
-        // Atualizar total do item (exemplo simplificado)
-        atualizarTotalItem(event.target.closest('.cart-item'));
-        atualizarResumo();
+    // ID do endereço selecionado
+    let enderecoSelecionadoId = null;
+
+    /* ============================================================
+     * FUNÇÕES DE UTILIDADE
+     * ============================================================ */
+
+    /**
+     * Obtém o token CSRF para requisições AJAX.
+     * Lê os metatags injetadas pelo Spring Security.
+     * @returns {{token: string, header: string}} Objeto com token e nome do header
+     */
+    function getCsrfToken() {
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+        return { token: csrfToken, header: csrfHeader };
     }
 
-    function atualizarTotalItem(item) {
-        const preco = parseFloat(item.querySelector('.item-price').textContent.replace('R$ ', '').replace(',', '.'));
-        const quantidade = parseInt(item.querySelector('.quantity-input').value);
-        const total = preco * quantidade;
-        item.querySelector('.item-total').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+    /**
+     * Exibe um alerta temporário na página.
+     * @param {string} mensagem - Texto do alerta
+     * @param {string} tipo - Tipo do alerta (success, danger, warning, info)
+     */
+    function mostrarAlerta(mensagem, tipo) {
+        const alertContainer = document.getElementById('alertContainer');
+        if (!alertContainer) return;
+
+        const alerta = document.createElement('div');
+        alerta.className = `alert alert-${tipo} alert-dismissible fade show`;
+        alerta.role = 'alert';
+
+        // Ícone apropriado para cada tipo de alerta
+        const icone = tipo === 'success' ? 'check-circle-fill' :
+            tipo === 'danger' ? 'exclamation-triangle-fill' :
+                'info-circle-fill';
+
+        alerta.innerHTML = `
+            <i class="bi bi-${icone}"></i>
+            <span>${mensagem}</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        alertContainer.appendChild(alerta);
+
+        // Remove o alerta automaticamente após 5 segundos
+        setTimeout(() => { if (alerta.parentNode) alerta.remove(); }, 5000);
     }
 
-    function atualizarResumo() {
-        // Calcular subtotal
-        let subtotal = 0;
-        document.querySelectorAll('.item-total').forEach(el => {
-            subtotal += parseFloat(el.textContent.replace('R$ ', '').replace(',', '.'));
+    /**
+     * Formata um valor numérico como moeda brasileira (R$).
+     * @param {number|string} valor - Valor a ser formatado
+     * @returns {string} Valor formatado (ex: "R$ 10,50")
+     */
+    function formatarMoeda(valor) {
+        return 'R$ ' + parseFloat(valor).toFixed(2).replace('.', ',');
+    }
+
+    /**
+     * Formata um valor negativo como moeda brasileira.
+     * @param {number|string} valor - Valor a ser formatado (positivo)
+     * @returns {string} Valor formatado negativo (ex: "- R$ 10,50")
+     */
+    function formatarMoedaNegativo(valor) {
+        return '- R$ ' + parseFloat(valor).toFixed(2).replace('.', ',');
+    }
+
+    /* ============================================================
+     * FUNÇÕES DE CLIENTE
+     * ============================================================ */
+
+    /**
+     * Carrega a lista de clientes do backend para o select.
+     * Chamada na inicialização da página.
+     */
+    function carregarClientes() {
+        fetch('/admin/clientes/api/para-seletor')
+            .then(response => {
+                if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+                return response.json();
+            })
+            .then(clientes => {
+                const selector = document.getElementById('clienteSelector');
+                selector.innerHTML = '<option value="">Selecione seu cliente</option>';
+
+                if (clientes.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = "";
+                    option.textContent = "Nenhum cliente cadastrado";
+                    option.disabled = true;
+                    selector.appendChild(option);
+                    return;
+                }
+
+                clientes.forEach(cliente => {
+                    const option = document.createElement('option');
+                    option.value = cliente.id;
+                    option.textContent = cliente.nome;
+                    selector.appendChild(option);
+                });
+
+                // Pré-seleciona o cliente atual se existir
+                if (clienteAtual) selector.value = clienteAtual;
+            })
+            .catch(error => {
+                console.error('Erro ao carregar clientes:', error);
+                mostrarAlerta('Erro ao carregar clientes. Tente novamente.', 'danger');
+            });
+    }
+
+    /**
+     * Altera o cliente selecionado e recarrega a página com o novo cliente.
+     * Disparado quando o usuário muda a seleção no dropdown.
+     */
+    function selecionarCliente() {
+        const selector = document.getElementById('clienteSelector');
+        const clienteId = selector.value;
+        if (clienteId) {
+            window.location.href = `/carrinho?clienteId=${clienteId}`;
+        } else {
+            window.location.href = '/carrinho';
+        }
+    }
+
+    /* ============================================================
+     * FUNÇÕES DO CARRINHO (ITENS)
+     * ============================================================ */
+
+    /**
+     * Altera a quantidade de um item no carrinho.
+     * @param {number} produtoId - ID do produto
+     * @param {number} novaQuantidade - Nova quantidade desejada
+     */
+    function alterarQuantidade(produtoId, novaQuantidade) {
+        if (!clienteAtual) {
+            mostrarAlerta('Cliente não selecionado', 'warning');
+            return;
+        }
+        if (novaQuantidade < 1) {
+            mostrarAlerta('A quantidade mínima é 1', 'warning');
+            return;
+        }
+
+        const csrf = getCsrfToken();
+        const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
+
+        // Feedback visual no botão clicado
+        const btn = event.target.closest('button');
+        let originalText = '';
+        if (btn) {
+            originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            btn.disabled = true;
+        }
+
+        fetch('/carrinho/api/alterar-quantidade', {
+            method: 'POST',
+            headers: headers,
+            body: `produtoId=${produtoId}&quantidade=${novaQuantidade}`
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Erro ao alterar quantidade');
+                    });
+                }
+                return response.json();
+            })
+            .then(() => location.reload())  // Recarrega para atualizar a interface
+            .catch(error => {
+                console.error('Erro:', error);
+                if (btn) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+                mostrarAlerta('Erro ao alterar quantidade: ' + error.message, 'danger');
+            });
+    }
+
+    /**
+     * Remove um item do carrinho.
+     * @param {number} produtoId - ID do produto a ser removido
+     */
+    function removerItem(produtoId) {
+        if (!clienteAtual) {
+            mostrarAlerta('Cliente não selecionado', 'warning');
+            return;
+        }
+        if (!confirm('Deseja remover este item do carrinho?')) return;
+
+        const csrf = getCsrfToken();
+        const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
+
+        const btn = event.target.closest('button');
+        const originalText = btn?.innerHTML;
+        if (btn) {
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            btn.disabled = true;
+        }
+
+        fetch('/carrinho/api/remover', {
+            method: 'POST',
+            headers: headers,
+            body: `produtoId=${produtoId}`
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Erro ao remover item');
+                    });
+                }
+                return response.json();
+            })
+            .then(() => location.reload())
+            .catch(error => {
+                console.error('Erro:', error);
+                if (btn) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+                mostrarAlerta('Erro ao remover item: ' + error.message, 'danger');
+            });
+    }
+
+    /**
+     * Limpa completamente o carrinho (remove todos os itens).
+     */
+    function limparCarrinho() {
+        if (!clienteAtual) return;
+        if (!confirm('Tem certeza que deseja limpar todo o carrinho?')) return;
+
+        const csrf = getCsrfToken();
+        const headers = {};
+        if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
+
+        const btn = event.target.closest('button');
+        const originalText = btn?.innerHTML;
+        if (btn) {
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            btn.disabled = true;
+        }
+
+        fetch('/carrinho/limpar', { method: 'POST', headers: headers })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                if (btn) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+                mostrarAlerta('Erro ao limpar carrinho: ' + error.message, 'danger');
+            });
+    }
+
+    /**
+     * Atualiza os valores do carrinho (subtotal, desconto, total, frete)
+     * consultando o backend.
+     */
+    function atualizarCarrinhoCompleto() {
+        if (!clienteAtual) return;
+
+        const enderecoId = $('#enderecoSelector').val();
+
+        // Se não há endereço selecionado, busca apenas o resumo básico
+        if (!enderecoId) {
+            fetch('/carrinho/api/resumo', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.erro) atualizarValoresNaTela(data);
+                })
+                .catch(error => console.error('Erro ao atualizar resumo:', error));
+            return;
+        }
+
+        // Com endereço selecionado, calcula frete também
+        const csrf = getCsrfToken();
+        const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
+
+        fetch('/carrinho/api/calcular-frete', {
+            method: 'POST',
+            headers: headers,
+            body: `enderecoId=${enderecoId}`
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.erro) {
+                    atualizarValoresNaTela(data);
+                } else {
+                    mostrarAlerta(data.erro, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar carrinho:', error);
+                mostrarAlerta('Erro ao atualizar valores do carrinho', 'danger');
+            });
+    }
+
+    /**
+     * Atualiza os elementos da tela com os valores do carrinho.
+     * @param {Object} data - Objeto com subtotal, desconto, total, valorFrete
+     */
+    function atualizarValoresNaTela(data) {
+        // Atualiza tabela de itens
+        $('#subtotalValue').text(formatarMoeda(data.subtotal));
+
+        if (data.desconto && data.desconto > 0) {
+            $('#descontoValue').text(formatarMoedaNegativo(data.desconto));
+            $('#descontoRow').show();
+        } else {
+            $('#descontoRow').hide();
+        }
+
+        $('#totalValue').text(formatarMoeda(data.total));
+
+        // Atualiza resumo do checkout
+        $('#resumoSubtotal').text(formatarMoeda(data.subtotal));
+
+        if (data.desconto && data.desconto > 0) {
+            if ($('#resumoDescontoRow').length === 0) {
+                // Cria a linha de desconto se não existir
+                $('.alert-info .d-flex:first').after(`
+                    <div class="d-flex justify-content-between mt-2" id="resumoDescontoRow">
+                        <span>Desconto:</span>
+                        <strong class="text-success" id="resumoDesconto">${formatarMoedaNegativo(data.desconto)}</strong>
+                    </div>
+                `);
+            } else {
+                $('#resumoDesconto').text(formatarMoedaNegativo(data.desconto));
+                $('#resumoDescontoRow').show();
+            }
+        } else {
+            $('#resumoDescontoRow').hide();
+        }
+
+        if (data.valorFrete !== undefined) {
+            $('#resumoFrete').text(formatarMoeda(data.valorFrete));
+        }
+
+        $('#resumoTotal').text(formatarMoeda(data.total));
+    }
+
+    /* ============================================================
+     * FUNÇÕES DE CUPOM
+     * ============================================================ */
+
+    /**
+     * Aplica um cupom ao carrinho.
+     * Lê o código do campo de input manual.
+     */
+    function aplicarCupom() {
+        if (!clienteAtual) {
+            mostrarAlerta('Cliente não selecionado', 'warning');
+            return;
+        }
+
+        let codigo = $('#codigoCupomManual').val().trim();
+        if (!codigo) {
+            mostrarAlerta('Digite o código do cupom para aplicar.', 'warning');
+            return;
+        }
+
+        const csrf = getCsrfToken();
+        const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
+
+        const btn = $('#aplicarCupomBtn');
+        const originalText = btn.html();
+        btn.html('<span class="spinner-border spinner-border-sm"></span> Aplicando...');
+        btn.prop('disabled', true);
+
+        fetch('/carrinho/api/aplicar-cupom', {
+            method: 'POST',
+            headers: headers,
+            body: `codigoCupom=${encodeURIComponent(codigo)}`
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.erro || 'Erro ao aplicar cupom');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                $('#codigoCupomManual').val('');
+                mostrarAlerta('Cupom aplicado com sucesso!', 'success');
+                atualizarListaCupons(data.cupons || []);
+                atualizarValoresNaTela(data);
+                if ($('#enderecoSelector').val()) atualizarFrete();
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                let mensagemErro = error.message;
+                if (mensagemErro.includes('Cupom inválido')) {
+                    mensagemErro = 'Cupom inválido ou expirado.';
+                } else if (mensagemErro.includes('não encontrado')) {
+                    mensagemErro = 'Cupom não encontrado.';
+                }
+                mostrarAlerta(mensagemErro, 'danger');
+            })
+            .finally(() => {
+                btn.html(originalText);
+                btn.prop('disabled', false);
+            });
+    }
+
+    /**
+     * Remove um cupom aplicado do carrinho.
+     * @param {number} cupomId - ID do cupom a ser removido
+     */
+    function removerCupom(cupomId) {
+        if (!clienteAtual) {
+            mostrarAlerta('Cliente não selecionado', 'warning');
+            return;
+        }
+
+        const csrf = getCsrfToken();
+        const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
+
+        const btn = event.target.closest('button');
+        const originalText = btn?.innerHTML;
+        if (btn) {
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            btn.disabled = true;
+        }
+
+        fetch('/carrinho/api/remover-cupom', {
+            method: 'POST',
+            headers: headers,
+            body: `cupomId=${cupomId}`
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.erro || 'Erro ao remover cupom');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                mostrarAlerta('Cupom removido com sucesso!', 'success');
+                const itemElement = btn?.closest('.list-group-item');
+                if (itemElement) itemElement.remove();
+                if ($('#cuponsAplicadosList li').length === 0) {
+                    $('#cuponsAplicadosContainer').html('');
+                }
+                atualizarValoresNaTela(data);
+                if ($('#enderecoSelector').val()) atualizarFrete();
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                mostrarAlerta('Erro ao remover cupom: ' + error.message, 'danger');
+            })
+            .finally(() => {
+                if (btn) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+    }
+
+    /**
+     * Atualiza a lista visual de cupons aplicados na tela.
+     * @param {Array} cupons - Lista de cupons aplicados
+     */
+    function atualizarListaCupons(cupons) {
+        if (!cupons || cupons.length === 0) {
+            $('#cuponsAplicadosContainer').html('');
+            return;
+        }
+
+        let html = `<hr><h6>Cupons aplicados:</h6><ul class="list-group mb-3" id="cuponsAplicadosList">`;
+        cupons.forEach(cupom => {
+            const valorDisplay = cupom.tipo === 'PERCENTUAL'
+                ? cupom.valor + '%'
+                : '- R$ ' + Number(cupom.valor).toFixed(2).replace('.', ',');
+            html += `
+                <li class="list-group-item d-flex justify-content-between align-items-center" data-cupom-id="${cupom.id}">
+                    <span>${cupom.codigo}</span>
+                    <span>
+                        <span class="badge bg-success">${valorDisplay}</span>
+                        <button class="btn btn-sm btn-danger ms-2 remove-cupom" data-cupom-id="${cupom.id}" title="Remover">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </span>
+                </li>
+            `;
+        });
+        html += `</ul>`;
+        $('#cuponsAplicadosContainer').html(html);
+
+        // Reatacha eventos aos botões de remover cupom
+        $('.remove-cupom').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const cupomId = $(this).data('cupom-id');
+            removerCupom(cupomId);
+        });
+    }
+
+    /* ============================================================
+     * FUNÇÕES DE ENDEREÇO E FRETE
+     * ============================================================ */
+
+    /**
+     * Valida os campos do formulário de novo endereço.
+     * @returns {boolean} true se todos os campos são válidos
+     */
+    function validarEnderecoCheckout() {
+        const checks = [
+            { el: $('#tipoLogradouro'), valid: !!$('#tipoLogradouro').val(), msg: 'Selecione o tipo' },
+            { el: $('#rua'), valid: ($('#rua').val()||'').trim().length >= 3, msg: 'Logradouro deve ter no mínimo 3 caracteres' },
+            { el: $('#numero'), valid: !!($('#numero').val()||'').trim(), msg: 'Número é obrigatório' },
+            { el: $('#bairro'), valid: ($('#bairro').val()||'').trim().length >= 2, msg: 'Bairro deve ter no mínimo 2 caracteres' },
+            { el: $('#cidade'), valid: ($('#cidade').val()||'').trim().length >= 2, msg: 'Cidade deve ter no mínimo 2 caracteres' },
+            { el: $('#uf'), valid: /^[A-Z]{2}$/.test(($('#uf').val()||'').toUpperCase()), msg: 'UF inválido' },
+            { el: $('#cep'), valid: (/^\d{5}-?\d{3}$/).test($('#cep').val()), msg: 'CEP deve conter 8 dígitos' }
+        ];
+
+        let ok = true;
+        checks.forEach(c => {
+            if (!c.valid) {
+                c.el.addClass('is-invalid');
+                if (!c.el.next('.invalid-feedback').length) {
+                    c.el.after(`<div class="invalid-feedback">${c.msg}</div>`);
+                }
+                ok = false;
+            } else {
+                c.el.removeClass('is-invalid');
+                c.el.next('.invalid-feedback').remove();
+            }
+        });
+        return ok;
+    }
+
+    /**
+     * Atualiza o estado do botão "Salvar Endereço" (habilita/desabilita)
+     * baseado na validade do formulário.
+     */
+    function updateSalvarEnderecoButtonState() {
+        const form = document.getElementById('formNovoEndereco');
+        if (!form) return;
+        const btn = document.getElementById('salvarEnderecoBtn');
+        const ok = form.checkValidity() && validarEnderecoCheckout();
+        if (btn) btn.disabled = !ok;
+    }
+
+    /**
+     * Salva um novo endereço via AJAX e o adiciona ao select.
+     * Utiliza o endpoint do CarrinhoController.
+     */
+    function salvarNovoEndereco() {
+        if (!clienteAtual) {
+            mostrarAlerta('Cliente não selecionado', 'warning');
+            return;
+        }
+
+        const form = document.getElementById('formNovoEndereco');
+        const msg = document.getElementById('msgNovoEndereco');
+        msg.textContent = '';
+
+        if (!form.checkValidity() || !validarEnderecoCheckout()) {
+            msg.textContent = 'Preencha todos os campos corretamente';
+            return;
+        }
+
+        // Limpa máscara do CEP antes de enviar (mantém apenas números)
+        const cepLimpo = document.getElementById('cep').value.replace(/\D/g, '');
+
+        const endereco = {
+            tipoLogradouro: document.getElementById('tipoLogradouro').value,
+            rua: document.getElementById('rua').value,
+            numero: document.getElementById('numero').value,
+            bairro: document.getElementById('bairro').value,
+            cidade: document.getElementById('cidade').value,
+            uf: document.getElementById('uf').value.toUpperCase(),
+            cep: cepLimpo,
+            observacoes: document.getElementById('observacoes').value,
+            enderecoEntrega: true,
+            enderecoCobranca: document.getElementById('flagCobranca')?.checked ?? false
+        };
+
+        const btn = document.getElementById('salvarEnderecoBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+        btn.disabled = true;
+
+        const csrf = getCsrfToken();
+        const headers = { 'Content-Type': 'application/json' };
+        if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
+
+        fetch('/carrinho/api/adicionar-endereco', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(endereco)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.erro || 'Erro ao salvar endereço');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.sucesso) {
+                    mostrarAlerta('Endereço adicionado com sucesso!', 'success');
+
+                    // Adiciona o novo endereço ao select e o seleciona
+                    const selector = document.getElementById('enderecoSelector');
+                    const newOption = document.createElement('option');
+                    newOption.value = data.enderecoId;
+                    newOption.textContent = data.enderecoDescricao;
+                    selector.appendChild(newOption);
+                    selector.value = data.enderecoId;
+
+                    // Dispara evento change para atualizar frete e habilitar botão
+                    const changeEvent = new Event('change', { bubbles: true });
+                    selector.dispatchEvent(changeEvent);
+
+                    // Limpa e fecha o formulário
+                    form.reset();
+                    const collapseElement = document.getElementById('novoEnderecoForm');
+                    const bsCollapse = bootstrap.Collapse.getInstance(collapseElement);
+                    if (bsCollapse) bsCollapse.hide();
+
+                    msg.textContent = '';
+                } else {
+                    throw new Error(data.erro || 'Erro ao salvar endereço');
+                }
+            })
+            .catch(err => {
+                console.error('Erro:', err);
+                msg.textContent = err.message;
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+    }
+
+    /**
+     * Atualiza o valor do frete baseado no endereço selecionado.
+     */
+    function atualizarFrete() {
+        const enderecoId = $('#enderecoSelector').val();
+        if (!enderecoId) return;
+
+        const csrf = getCsrfToken();
+        const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
+
+        $('#resumoFrete').html('<span class="spinner-border spinner-border-sm"></span>');
+
+        fetch('/carrinho/api/calcular-frete', {
+            method: 'POST',
+            headers: headers,
+            body: `enderecoId=${enderecoId}`
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Erro ao calcular frete');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.erro) {
+                    mostrarAlerta(data.erro, 'danger');
+                    $('#resumoFrete').text('R$ 0,00');
+                    return;
+                }
+                atualizarValoresNaTela(data);
+            })
+            .catch(error => {
+                console.error('Erro ao calcular frete:', error);
+                mostrarAlerta('Erro ao calcular frete: ' + error.message, 'danger');
+                $('#resumoFrete').text('R$ 0,00');
+            });
+    }
+
+    /* ============================================================
+     * FUNÇÕES DO MODAL DE CUPONS
+     * ============================================================ */
+
+    /**
+     * Abre o modal com a lista de cupons disponíveis do cliente.
+     */
+    function abrirModalCupons() {
+        if (!clienteAtual) {
+            mostrarAlerta('Selecione um cliente para visualizar seus cupons.', 'warning');
+            return;
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('cuponsModal'));
+        const modalBody = document.getElementById('cuponsModalBody');
+        modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Carregando seus cupons...</p></div>';
+        modal.show();
+
+        fetch(`/admin/cupons/api/cliente/${clienteAtual}/validos`)
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
+            .then(cupons => {
+                if (!cupons || cupons.length === 0) {
+                    modalBody.innerHTML = '<div class="alert alert-info">Você não possui cupons disponíveis no momento.</div>';
+                    return;
+                }
+
+                let html = '<div class="list-group">';
+                cupons.forEach(cupom => {
+                    let valorDisplay = '';
+                    if (cupom.tipo === 'PERCENTUAL') {
+                        valorDisplay = `${cupom.valor}% de desconto`;
+                    } else if (cupom.tipo === 'TROCA') {
+                        valorDisplay = `R$ ${cupom.valor.toFixed(2).replace('.', ',')} de desconto`;
+                    } else {
+                        valorDisplay = `R$ ${cupom.valor.toFixed(2).replace('.', ',')} de desconto`;
+                    }
+
+                    const validade = new Date(cupom.dataValidade).toLocaleDateString('pt-BR');
+                    html += `
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1"><strong>${cupom.codigo}</strong></h6>
+                                <span class="text-success fw-bold">${valorDisplay}</span>
+                            </div>
+                            <p class="mb-1 small">${cupom.descricao || ''}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small>Válido até: ${validade}</small>
+                                <button class="btn btn-sm btn-primary" onclick="aplicarCupomDoModal('${cupom.codigo}')">
+                                    <i class="bi bi-ticket-perforated"></i> Usar
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                modalBody.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Erro ao carregar cupons:', error);
+                modalBody.innerHTML = '<div class="alert alert-danger">Erro ao carregar cupons. Tente novamente mais tarde.</div>';
+            });
+    }
+
+    /**
+     * Aplica um cupom selecionado no modal.
+     * @param {string} codigo - Código do cupom
+     */
+    function aplicarCupomDoModal(codigo) {
+        const modalElement = document.getElementById('cuponsModal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) modal.hide();
+
+        const inputCodigo = document.getElementById('codigoCupomManual');
+        if (inputCodigo) {
+            inputCodigo.value = codigo;
+            const aplicarBtn = document.getElementById('aplicarCupomBtn');
+            if (aplicarBtn) aplicarBtn.click();
+        } else {
+            aplicarCupomComCodigo(codigo);
+        }
+    }
+
+    /**
+     * Aplica um cupom diretamente pelo código (sem usar o input manual).
+     * @param {string} codigo - Código do cupom
+     */
+    function aplicarCupomComCodigo(codigo) {
+        if (!clienteAtual) {
+            mostrarAlerta('Cliente não selecionado', 'warning');
+            return;
+        }
+
+        const csrf = getCsrfToken();
+        const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
+
+        fetch('/carrinho/api/aplicar-cupom', {
+            method: 'POST',
+            headers: headers,
+            body: `codigoCupom=${encodeURIComponent(codigo)}`
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.erro) throw new Error(data.erro);
+                mostrarAlerta('Cupom aplicado com sucesso!', 'success');
+                atualizarListaCupons(data.cupons || []);
+                atualizarValoresNaTela(data);
+                if ($('#enderecoSelector').val()) atualizarFrete();
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                mostrarAlerta(error.message || 'Erro ao aplicar cupom', 'danger');
+            });
+    }
+
+    /* ============================================================
+     * INICIALIZAÇÃO DA PÁGINA (DOCUMENT READY)
+     * ============================================================ */
+    $(document).ready(function() {
+        // Carrega a lista de clientes
+        carregarClientes();
+
+        /* ===== MÁSCARAS E VALIDAÇÕES DO FORMULÁRIO DE ENDEREÇO ===== */
+        $('#cep').mask('00000-000');
+
+        // Força UF para maiúsculas e permite apenas letras
+        $('#uf').on('input', function() {
+            this.value = this.value.toUpperCase().replace(/[^A-Z]/g,'');
         });
 
-        // Atualizar subtotal no resumo
-        document.querySelector('.summary-row span:last-child').textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
+        // Busca automática de endereço via ViaCEP quando CEP é preenchido
+        $('#cep').on('blur', function() {
+            const cep = $(this).val().replace(/\D/g,'');
+            if (cep.length === 8) {
+                $.getJSON(`https://viacep.com.br/ws/${cep}/json/`, function(data) {
+                    if (!data.erro) {
+                        $('#rua').val(data.logradouro);
+                        $('#bairro').val(data.bairro);
+                        $('#cidade').val(data.localidade);
+                        $('#uf').val(data.uf);
+                    }
+                    updateSalvarEnderecoButtonState();
+                });
+            }
+            updateSalvarEnderecoButtonState();
+        });
 
-        // Calcular total (com frete)
-        const frete = 15.90;
-        const total = subtotal + frete;
-        document.querySelector('.summary-row.total span:last-child').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
-    }
+        // Monitora mudanças nos campos do formulário para habilitar/desabilitar botão
+        $('#formNovoEndereco').find('input, select, textarea').on('input change', updateSalvarEnderecoButtonState);
 
-    function confirmarRemocao(id) {
-        if (confirm('Deseja remover este item do carrinho?')) {
-            // Aqui você faria uma chamada AJAX para remover do carrinho
-            console.log('Remover produto', id);
-            window.location.href = '/carrinho/remover/' + id;
+        /* ===== EVENTOS DE BOTÕES ===== */
+        $('#aplicarCupomBtn').off('click').on('click', aplicarCupom);
+        $('#salvarEnderecoBtn').off('click').on('click', salvarNovoEndereco);
+
+        // Aplica cupom ao pressionar Enter no campo de código
+        $('#codigoCupomManual').on('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                aplicarCupom();
+            }
+        });
+
+        /* ===== BOTÕES DE REMOVER ITEM ===== */
+        $('.remove-item').each(function() {
+            const produtoId = $(this).data('produto-id');
+            $(this).off('click').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                removerItem(produtoId);
+            });
+        });
+
+        /* ===== CONTROLES DE QUANTIDADE (+ e -) ===== */
+        $('.quantity-control').each(function() {
+            const row = $(this).closest('tr');
+            const produtoId = row.data('produto-id');
+            if (!produtoId) return;
+
+            const btnMinus = $(this).find('.quantity-minus');
+            const btnPlus = $(this).find('.quantity-plus');
+            const input = $(this).find('.quantity-input');
+
+            btnMinus.data('produto-id', produtoId);
+            btnPlus.data('produto-id', produtoId);
+
+            btnMinus.off('click').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const pid = $(this).data('produto-id');
+                const currentQty = parseInt(input.val()) || 1;
+                const novaQuantidade = currentQty - 1;
+                if (novaQuantidade >= 1) {
+                    alterarQuantidade(pid, novaQuantidade);
+                } else {
+                    mostrarAlerta('A quantidade mínima é 1', 'warning');
+                }
+            });
+
+            btnPlus.off('click').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const pid = $(this).data('produto-id');
+                const currentQty = parseInt(input.val()) || 1;
+                const novaQuantidade = currentQty + 1;
+                alterarQuantidade(pid, novaQuantidade);
+            });
+        });
+
+        /* ===== SELEÇÃO DE ENDEREÇO ===== */
+        $('#enderecoSelector').off('change').on('change', function() {
+            const enderecoId = $(this).val();
+            $('#enderecoIdInput').val(enderecoId);
+            enderecoSelecionadoId = enderecoId;
+
+            if (enderecoId) {
+                $('#irParaPagamentoBtn').prop('disabled', false);
+                atualizarFrete();
+            } else {
+                $('#irParaPagamentoBtn').prop('disabled', true);
+                $('#resumoFrete').text('R$ 0,00');
+
+                // Recalcula total sem frete
+                const subtotal = parseFloat($('#subtotalValue').text().replace('R$ ', '').replace(',', '.'));
+                const descontoText = $('#descontoValue').text();
+                const desconto = descontoText ? parseFloat(descontoText.replace('- R$ ', '').replace(',', '.')) : 0;
+                const totalSemFrete = subtotal - desconto;
+                $('#totalValue').text(formatarMoeda(totalSemFrete));
+                $('#resumoTotal').text(formatarMoeda(totalSemFrete));
+            }
+        });
+
+        // Inicializa frete se já houver endereço selecionado
+        if ($('#enderecoSelector').val()) {
+            atualizarFrete();
         }
-        return false;
-    }
 
-    // Badge do carrinho (exemplo)
-    document.addEventListener('DOMContentLoaded', function() {
-        const cartBadge = document.querySelector('.cart-badge');
-        if (cartBadge && cartBadge.textContent === '0') {
-            cartBadge.style.display = 'none';
-        }
+        updateSalvarEnderecoButtonState();
+
+        /* ===== VALIDAÇÃO DO FORMULÁRIO ANTES DE ENVIAR ===== */
+        $('#formIrParaPagamento').off('submit').on('submit', function(e) {
+            const enderecoId = $('#enderecoIdInput').val();
+            if (!enderecoId) {
+                e.preventDefault();
+                mostrarAlerta('Selecione um endereço de entrega!', 'warning');
+                return false;
+            }
+            return true;
+        });
     });
 </script>
 

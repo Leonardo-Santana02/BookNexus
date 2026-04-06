@@ -2,7 +2,6 @@ package br.com.java.e_commerce.nexus.model.venda;
 
 import br.com.java.e_commerce.nexus.model.cliente.Cliente;
 import br.com.java.e_commerce.nexus.model.cliente.Endereco;
-import br.com.java.e_commerce.nexus.model.carrinho.ItemCarrinho;
 import br.com.java.e_commerce.nexus.model.enums.StatusPedido;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -22,9 +21,8 @@ public class Pedido {
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "pedido_id")
-    private List<ItemCarrinho> itens = new ArrayList<>();
+    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItemPedido> itens = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "endereco_entrega_id", nullable = false)
@@ -66,7 +64,7 @@ public class Pedido {
     public BigDecimal calcularSubtotal() {
         if (itens == null || itens.isEmpty()) return BigDecimal.ZERO;
         return itens.stream()
-                .map(ItemCarrinho::getPrecoFinal)
+                .map(ItemPedido::getPrecoTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -96,137 +94,70 @@ public class Pedido {
         this.status = StatusPedido.CANCELADO;
     }
 
+    @PrePersist
+    @PreUpdate
+    private void validarItens() {
+        if (itens == null || itens.isEmpty()) {
+            throw new IllegalStateException("Pedido não pode ser salvo sem itens");
+        }
+    }
+
+    public boolean temItens() {
+        return itens != null && !itens.isEmpty();
+    }
+
+    public ItemPedido getPrimeiroItem() {
+        if (!temItens()) return null;
+        return itens.get(0);
+    }
+
+    public int getQuantidadeTotalItens() {
+        if (!temItens()) return 0;
+        return itens.stream().mapToInt(ItemPedido::getQuantidade).sum();
+    }
+
     // ===== GETTERS E SETTERS =====
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Cliente getCliente() {
-        return cliente;
-    }
-
-    public void setCliente(Cliente cliente) {
-        this.cliente = cliente;
-    }
-
-    public List<ItemCarrinho> getItens() {
-        return itens;
-    }
-
-    public void setItens(List<ItemCarrinho> itens) {
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Cliente getCliente() { return cliente; }
+    public void setCliente(Cliente cliente) { this.cliente = cliente; }
+    public List<ItemPedido> getItens() { return itens; }
+    public void setItens(List<ItemPedido> itens) {
+        if (itens == null) throw new IllegalArgumentException("Lista de itens não pode ser null");
         this.itens = itens;
         this.subtotal = calcularSubtotal();
         this.valorTotal = calcularTotal();
     }
-
-    public Endereco getEnderecoEntrega() {
-        return enderecoEntrega;
-    }
-
-    public void setEnderecoEntrega(Endereco enderecoEntrega) {
-        this.enderecoEntrega = enderecoEntrega;
-    }
-
-    public StatusPedido getStatus() {
-        return status;
-    }
-
-    public void setStatus(StatusPedido status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getDataCriacao() {
-        return dataCriacao;
-    }
-
-    public void setDataCriacao(LocalDateTime dataCriacao) {
-        this.dataCriacao = dataCriacao;
-    }
-
-    public LocalDateTime getDataConfirmacao() {
-        return dataConfirmacao;
-    }
-
-    public void setDataConfirmacao(LocalDateTime dataConfirmacao) {
-        this.dataConfirmacao = dataConfirmacao;
-    }
-
-    public LocalDateTime getDataEnvio() {
-        return dataEnvio;
-    }
-
-    public void setDataEnvio(LocalDateTime dataEnvio) {
-        this.dataEnvio = dataEnvio;
-    }
-
-    public LocalDateTime getDataEntrega() {
-        return dataEntrega;
-    }
-
-    public void setDataEntrega(LocalDateTime dataEntrega) {
-        this.dataEntrega = dataEntrega;
-    }
-
-    public BigDecimal getSubtotal() {
-        return subtotal;
-    }
-
-    public void setSubtotal(BigDecimal subtotal) {
-        this.subtotal = subtotal;
-    }
-
-    public BigDecimal getDescontoPromocional() {
-        return descontoPromocional;
-    }
-
+    public Endereco getEnderecoEntrega() { return enderecoEntrega; }
+    public void setEnderecoEntrega(Endereco enderecoEntrega) { this.enderecoEntrega = enderecoEntrega; }
+    public StatusPedido getStatus() { return status; }
+    public void setStatus(StatusPedido status) { this.status = status; }
+    public LocalDateTime getDataCriacao() { return dataCriacao; }
+    public void setDataCriacao(LocalDateTime dataCriacao) { this.dataCriacao = dataCriacao; }
+    public LocalDateTime getDataConfirmacao() { return dataConfirmacao; }
+    public void setDataConfirmacao(LocalDateTime dataConfirmacao) { this.dataConfirmacao = dataConfirmacao; }
+    public LocalDateTime getDataEnvio() { return dataEnvio; }
+    public void setDataEnvio(LocalDateTime dataEnvio) { this.dataEnvio = dataEnvio; }
+    public LocalDateTime getDataEntrega() { return dataEntrega; }
+    public void setDataEntrega(LocalDateTime dataEntrega) { this.dataEntrega = dataEntrega; }
+    public BigDecimal getSubtotal() { return subtotal; }
+    public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
+    public BigDecimal getDescontoPromocional() { return descontoPromocional; }
     public void setDescontoPromocional(BigDecimal descontoPromocional) {
         this.descontoPromocional = descontoPromocional;
         this.valorTotal = calcularTotal();
     }
-
-    public BigDecimal getValorFrete() {
-        return valorFrete;
-    }
-
+    public BigDecimal getValorFrete() { return valorFrete; }
     public void setValorFrete(BigDecimal valorFrete) {
         this.valorFrete = valorFrete;
         this.valorTotal = calcularTotal();
     }
-
-    public BigDecimal getValorTotal() {
-        return valorTotal;
-    }
-
-    public void setValorTotal(BigDecimal valorTotal) {
-        this.valorTotal = valorTotal;
-    }
-
-    public String getResumoCuponsPromocionais() {
-        return resumoCuponsPromocionais;
-    }
-
-    public void setResumoCuponsPromocionais(String resumoCuponsPromocionais) {
-        this.resumoCuponsPromocionais = resumoCuponsPromocionais;
-    }
-
-    public Pagamento getPagamento() {
-        return pagamento;
-    }
-
-    public void setPagamento(Pagamento pagamento) {
-        this.pagamento = pagamento;
-    }
-
-    public String getCodigoRastreio() {
-        return codigoRastreio;
-    }
-
-    public void setCodigoRastreio(String codigoRastreio) {
-        this.codigoRastreio = codigoRastreio;
-    }
+    public BigDecimal getValorTotal() { return valorTotal; }
+    public void setValorTotal(BigDecimal valorTotal) { this.valorTotal = valorTotal; }
+    public String getResumoCuponsPromocionais() { return resumoCuponsPromocionais; }
+    public void setResumoCuponsPromocionais(String resumoCuponsPromocionais) { this.resumoCuponsPromocionais = resumoCuponsPromocionais; }
+    public Pagamento getPagamento() { return pagamento; }
+    public void setPagamento(Pagamento pagamento) { this.pagamento = pagamento; }
+    public String getCodigoRastreio() { return codigoRastreio; }
+    public void setCodigoRastreio(String codigoRastreio) { this.codigoRastreio = codigoRastreio; }
 }

@@ -4,12 +4,19 @@
     <meta charset="UTF-8">
     <title>Pagamento - BookNexus</title>
 
+    <!-- Meta tags CSRF -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
     <!-- Font Awesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <!-- jQuery e Mask para máscaras -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
+    <!-- SweetAlert2 para pop-ups -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         /* ===== RESET ===== */
@@ -326,94 +333,188 @@
             font-size: 14px;
         }
 
-        /* ===== FORMULÁRIO DE CARTÃO ===== */
-        .card-form {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+        /* ===== CARTÕES DO CLIENTE ===== */
+        .cartoes-cliente {
+            margin-top: 20px;
         }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+        .cartao-item {
+            border: 2px solid #e0e7ff;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: 0.3s;
+            cursor: pointer;
         }
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .cartao-item:hover {
+            border-color: #1e88e5;
         }
 
-        .form-group label {
-            font-weight: 600;
-            font-size: 14px;
-            color: #555;
+        .cartao-item.selected {
+            border-color: #1e88e5;
+            background: #e3f2fd;
+        }
+
+        .cartao-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 5px;
+            margin-bottom: 10px;
         }
 
-        .form-group label i {
+        .cartao-bandeira {
+            font-weight: bold;
             color: #1e88e5;
         }
 
-        .form-group input,
-        .form-group select {
-            padding: 12px 15px;
-            border: 2px solid #e0e7ff;
+        .cartao-numero {
+            font-family: monospace;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .cartao-valor {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cartao-valor label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .cartao-valor input {
+            width: 130px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .cartao-valor input:focus {
+            outline: none;
+            border-color: #1e88e5;
+            box-shadow: 0 0 0 2px rgba(30,136,229,0.1);
+        }
+
+        .btn-adicionar-cartao {
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 2px dashed #1e88e5;
             border-radius: 12px;
+            color: #1e88e5;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-adicionar-cartao:hover {
+            background: #e3f2fd;
+        }
+
+        /* ===== FORMULÁRIO NOVO CARTÃO ===== */
+        .novo-cartao-form {
+            margin-top: 15px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 16px;
+            display: none;
+        }
+
+        .novo-cartao-form h5 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .novo-cartao-form h5 i {
+            color: #1e88e5;
+        }
+
+        .novo-cartao-form input,
+        .novo-cartao-form select {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 12px;
+            border: 2px solid #e0e7ff;
+            border-radius: 10px;
             font-size: 14px;
             transition: 0.3s;
             background: white;
         }
 
-        .form-group input:focus,
-        .form-group select:focus {
+        .novo-cartao-form input:focus,
+        .novo-cartao-form select:focus {
             outline: none;
             border-color: #1e88e5;
             box-shadow: 0 0 0 3px rgba(30,136,229,0.1);
         }
 
-        .form-group input.error {
+        .novo-cartao-form input.error {
             border-color: #e53935;
         }
 
-        .input-icon {
-            position: relative;
-        }
-
-        .input-icon i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #999;
-        }
-
-        .input-icon input {
-            padding-left: 45px;
-        }
-
-        .card-flags {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .card-flag {
-            padding: 5px 10px;
-            border-radius: 8px;
-            background: #f8f9fa;
+        .error-message {
+            color: #e53935;
             font-size: 12px;
-            color: #666;
+            margin-top: -8px;
+            margin-bottom: 8px;
+            display: none;
+        }
+
+        /* BOTÃO SALVAR CARTÃO ESTILIZADO */
+        .btn-salvar-cartao {
+            width: 100%;
+            background: linear-gradient(135deg, #1e88e5, #26a69a);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 5px;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .card-flag i {
-            color: #1e88e5;
+        .btn-salvar-cartao:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(30,136,229,0.3);
+        }
+
+        .btn-salvar-cartao:active {
+            transform: translateY(0);
+        }
+
+        .btn-salvar-cartao i {
+            font-size: 18px;
+            transition: 0.3s;
+        }
+
+        .btn-salvar-cartao:hover i {
+            transform: scale(1.1);
+        }
+
+        .btn-salvar-cartao:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
         /* ===== PIX ===== */
@@ -455,11 +556,6 @@
             margin: 20px auto;
         }
 
-        .pix-key span {
-            font-family: monospace;
-            font-size: 14px;
-        }
-
         .pix-key button {
             padding: 8px 15px;
             background: #1e88e5;
@@ -468,10 +564,6 @@
             border-radius: 8px;
             cursor: pointer;
             transition: 0.3s;
-        }
-
-        .pix-key button:hover {
-            background: #1565c0;
         }
 
         /* ===== BOLETO ===== */
@@ -484,11 +576,6 @@
 
         .boleto-info {
             margin: 25px 0;
-        }
-
-        .boleto-info p {
-            color: #666;
-            margin: 10px 0;
         }
 
         /* ===== RESUMO DO PEDIDO ===== */
@@ -580,11 +667,16 @@
             border-radius: 8px;
         }
 
-        .summary-row.frete i {
-            color: #1e88e5;
+        .valor-restante {
+            background: #fff3cd;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
         }
 
-        .summary-row.frete.free {
+        .valor-restante.verde {
             background: #d4edda;
             color: #155724;
         }
@@ -639,10 +731,6 @@
             border: 1px solid #ddd;
         }
 
-        .btn-outline:hover {
-            background: #f5f5f5;
-        }
-
         .action-bar {
             display: flex;
             gap: 15px;
@@ -662,15 +750,6 @@
         .terms-checkbox input {
             width: 18px;
             height: 18px;
-        }
-
-        .terms-checkbox a {
-            color: #1e88e5;
-            text-decoration: none;
-        }
-
-        .terms-checkbox a:hover {
-            text-decoration: underline;
         }
 
         /* ===== MENSAGENS ===== */
@@ -743,41 +822,41 @@
                 gap: 15px;
                 padding: 15px 20px;
             }
-
             .search-bar {
                 max-width: 100%;
                 margin: 10px 0;
             }
-
             .content {
                 padding: 20px;
             }
-
             .payment-grid {
                 grid-template-columns: 1fr;
             }
-
             .checkout-progress {
                 gap: 10px;
             }
-
             .step-line {
                 width: 30px;
             }
-
             .method-tabs {
                 flex-direction: column;
             }
-
             .action-bar {
                 flex-direction: column;
+            }
+            .cartao-valor {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .cartao-valor input {
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
 
-<!-- HEADER (sem navbar) -->
+<!-- HEADER -->
 <header class="header">
     <div class="logo">
         <a href="/home">
@@ -798,9 +877,8 @@
     <div class="header-actions">
         <a href="/carrinho" class="carrinho-link" title="Carrinho">
             <i class="fa-solid fa-cart-shopping fa-xl"></i>
-            <span class="cart-badge" th:if="${carrinhoQuantidade > 0}" th:text="${carrinhoQuantidade}">3</span>
+            <span class="cart-badge" th:if="${pedido != null && pedido.itens != null && !pedido.itens.isEmpty()}" th:text="${pedido.itens.size()}"></span>
         </a>
-
         <a href="/minha-conta" class="profile-link" title="Minha Conta">
             <i class="fa-solid fa-circle-user fa-2xl"></i>
         </a>
@@ -831,7 +909,6 @@
         <i class="fa-solid fa-check-circle"></i>
         <span th:text="${mensagem}"></span>
     </div>
-
     <div th:if="${erro}" class="alert alert-error">
         <i class="fa-solid fa-exclamation-circle"></i>
         <span th:text="${erro}"></span>
@@ -853,6 +930,13 @@
             <span class="step-number">3</span>
             <span>Confirmação</span>
         </div>
+    </div>
+
+    <!-- INFORMAÇÕES DO CLIENTE -->
+    <div class="alert alert-info mb-4" th:if="${pedido != null && pedido.cliente != null}">
+        <i class="fa-solid fa-user-circle"></i>
+        <strong>Cliente:</strong> <span th:text="${pedido.cliente.nome}"></span>
+        <span th:text="'(' + ${pedido.cliente.email} + ')'"></span>
     </div>
 
     <!-- GRID DE PAGAMENTO -->
@@ -886,93 +970,96 @@
 
                 <!-- SEÇÃO CARTÃO DE CRÉDITO -->
                 <div id="cartao-section" class="card-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label><i class="fa-regular fa-credit-card"></i> Número do Cartão</label>
-                            <input type="text" id="cartaoNumero" class="cartao-numero" placeholder="0000 0000 0000 0000" value="4532 1234 5678 9012">
-                            <div class="card-flags">
-                                <span class="card-flag"><i class="fa-brands fa-cc-visa"></i> Visa</span>
-                                <span class="card-flag"><i class="fa-brands fa-cc-mastercard"></i> Master</span>
-                                <span class="card-flag"><i class="fa-brands fa-cc-amex"></i> Amex</span>
-                                <span class="card-flag"><i class="fa-brands fa-cc-elo"></i> Elo</span>
+                    <div th:if="${pedido != null && pedido.cliente != null && pedido.cliente.cartoesCredito != null && !pedido.cliente.cartoesCredito.isEmpty()}">
+                        <h4>Meus Cartões</h4>
+                        <div class="cartoes-cliente" id="cartoesContainer">
+                            <div th:each="cartao : ${pedido.cliente.cartoesCredito}" class="cartao-item" th:data-cartao-id="${cartao.id}">
+                                <div class="cartao-header">
+                                    <span class="cartao-bandeira" th:text="${cartao.bandeira.descricao}">Bandeira</span>
+                                    <span th:if="${cartao.preferencial}" class="badge bg-success" style="background: #28a745; color: white; padding: 2px 8px; border-radius: 20px;">Preferencial</span>
+                                </div>
+                                <div class="cartao-numero" th:text="${cartao.numeroCartao}">**** **** **** 1234</div>
+                                <div class="cartao-valor">
+                                    <label>Valor a pagar (mínimo R$ 10,00):</label>
+                                    <input type="number" class="valor-cartao" step="0.01" min="10" placeholder="0,00">
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label><i class="fa-regular fa-user"></i> Nome Impresso</label>
-                            <input type="text" id="cartaoNome" placeholder="Como está no cartão" value="LEONARDO SANTANA">
-                        </div>
+                    <div th:if="${pedido == null || pedido.cliente == null || pedido.cliente.cartoesCredito == null || pedido.cliente.cartoesCredito.isEmpty()}">
+                        <div class="alert alert-warning">Nenhum cartão cadastrado. Cadastre um cartão para continuar.</div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label><i class="fa-regular fa-calendar"></i> Validade</label>
-                            <input type="text" id="cartaoValidade" class="validade" placeholder="MM/AA" value="12/25">
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fa-regular fa-lock"></i> CVV</label>
-                            <input type="text" id="cartaoCvv" class="cvv" placeholder="123" maxlength="3" value="123">
-                        </div>
-                    </div>
+                    <button type="button" class="btn-adicionar-cartao" onclick="toggleNovoCartao()">
+                        <i class="fa-solid fa-plus-circle"></i> Adicionar novo cartão
+                    </button>
 
-                    <div class="form-row">
+                    <!-- Formulário novo cartão com botão estilizado -->
+                    <div id="novoCartaoForm" class="novo-cartao-form">
+                        <h5>
+                            <i class="fa-solid fa-credit-card"></i>
+                            Novo Cartão
+                        </h5>
                         <div class="form-group">
-                            <label><i class="fa-regular fa-address-card"></i> CPF do Titular</label>
-                            <input type="text" id="cartaoCpf" class="cpf" placeholder="000.000.000-00" value="123.456.789-00">
+                            <input type="text" id="novoNumero" placeholder="Número do Cartão (16 dígitos)" maxlength="19">
+                            <div class="error-message" id="erroNumero">Número deve ter 16 dígitos</div>
                         </div>
                         <div class="form-group">
-                            <label><i class="fa-regular fa-calendar"></i> Data Nascimento</label>
-                            <input type="date" id="cartaoDataNasc" value="1990-01-01">
+                            <input type="text" id="novoNome" placeholder="Nome no Cartão">
+                            <div class="error-message" id="erroNome">Nome é obrigatório</div>
                         </div>
-                    </div>
-
-                    <div class="form-row">
                         <div class="form-group">
-                            <label><i class="fa-regular fa-credit-card"></i> Parcelamento</label>
-                            <select id="parcelamento">
-                                <option>1x de R$ 359,60 (sem juros)</option>
-                                <option>2x de R$ 179,80 (sem juros)</option>
-                                <option>3x de R$ 119,87 (sem juros)</option>
-                                <option>4x de R$ 93,90 (com juros)</option>
-                                <option>5x de R$ 76,72 (com juros)</option>
-                                <option>6x de R$ 65,42 (com juros)</option>
+                            <input type="text" id="novoCvv" placeholder="CVV" maxlength="3">
+                            <div class="error-message" id="erroCvv">CVV deve ter 3 dígitos</div>
+                        </div>
+                        <div class="form-group">
+                            <select id="novaBandeira">
+                                <option value="">Selecione a bandeira</option>
+                                <option th:each="bandeira : ${bandeiras}" th:value="${bandeira}" th:text="${bandeira.descricao}"></option>
                             </select>
+                            <div class="error-message" id="erroBandeira">Selecione a bandeira</div>
                         </div>
+                        <button type="button" class="btn-salvar-cartao" onclick="adicionarNovoCartao()">
+                            <i class="fa-solid fa-check-circle"></i>
+                            Salvar Cartão
+                        </button>
+                        <div id="msgNovoCartao" class="alert alert-error" style="display: none; margin-top: 10px;"></div>
                     </div>
+
+                    <div id="valorTotalPago" class="alert alert-info mt-3" style="display: none;">
+                        <strong>Total pago com cartões:</strong> R$ <span id="totalCartoes">0,00</span>
+                    </div>
+
                 </div>
 
-                <!-- SEÇÃO PIX (inicialmente oculta) -->
+                <!-- SEÇÃO PIX -->
                 <div id="pix-section" style="display: none;">
                     <div class="pix-section">
                         <i class="fa-brands fa-pix" style="font-size: 60px; color: #1e88e5; margin-bottom: 20px;"></i>
                         <h3 style="margin-bottom: 15px;">Pagamento via PIX</h3>
                         <p style="color: #666; margin-bottom: 20px;">Escaneie o QR Code ou copie a chave PIX para pagar</p>
-
                         <div class="pix-qrcode">
                             <i class="fa-solid fa-qrcode"></i>
                         </div>
-
                         <div class="pix-key">
                             <span>00020126580014br.gov.bcb.pix0136c56c5e...</span>
                             <button onclick="copiarPix()">Copiar</button>
                         </div>
-
                         <p style="font-size: 13px; color: #999; margin-top: 15px;">
                             <i class="fa-regular fa-clock"></i> O PIX será confirmado em até 30 segundos
                         </p>
                     </div>
                 </div>
 
-                <!-- SEÇÃO BOLETO (inicialmente oculta) -->
+                <!-- SEÇÃO BOLETO -->
                 <div id="boleto-section" style="display: none;">
                     <div class="boleto-section">
                         <i class="fa-solid fa-barcode" style="font-size: 60px; color: #1e88e5; margin-bottom: 20px;"></i>
                         <h3 style="margin-bottom: 15px;">Boleto Bancário</h3>
                         <div class="boleto-info">
-                            <p>Valor: <strong>R$ 359,60</strong></p>
-                            <p>Vencimento: 25/02/2024</p>
+                            <p>Valor: <strong th:text="'R$ ' + ${#numbers.formatDecimal(pedido.valorTotal, 1, 2, 'POINT')}">R$ 0,00</strong></p>
+                            <p>Vencimento: 25/04/2026</p>
                             <p style="font-size: 13px;">O boleto pode ser pago em qualquer banco, casa lotérica ou internet banking</p>
                         </div>
                         <button class="btn btn-primary" style="width: auto; padding: 12px 30px;" onclick="gerarBoleto()">
@@ -1005,61 +1092,36 @@
             </h3>
 
             <div class="summary-items">
-                <!-- ITEM 1 -->
-                <div class="summary-item">
+                <div th:each="item : ${pedido.itens}" class="summary-item">
                     <div class="item-image">
                         <i class="fa-solid fa-book"></i>
                     </div>
                     <div class="item-details">
-                        <h4>Clean Code</h4>
-                        <p>Robert C. Martin • 1 unid.</p>
-                        <span class="item-price">R$ 79,90</span>
-                    </div>
-                </div>
-
-                <!-- ITEM 2 -->
-                <div class="summary-item">
-                    <div class="item-image">
-                        <i class="fa-solid fa-book"></i>
-                    </div>
-                    <div class="item-details">
-                        <h4>Arquitetura Limpa</h4>
-                        <p>Robert C. Martin • 2 unid.</p>
-                        <span class="item-price">R$ 179,80</span>
-                    </div>
-                </div>
-
-                <!-- ITEM 3 -->
-                <div class="summary-item">
-                    <div class="item-image">
-                        <i class="fa-solid fa-book"></i>
-                    </div>
-                    <div class="item-details">
-                        <h4>Domain Driven Design</h4>
-                        <p>Eric Evans • 1 unid.</p>
-                        <span class="item-price">R$ 99,90</span>
+                        <h4 th:text="${item.produto.titulo}">Título</h4>
+                        <p th:text="'por ' + ${item.produto.autor} + ' • ' + ${item.quantidade} + ' unid.'">Autor • 1 unid.</p>
+                        <span class="item-price" th:text="'R$ ' + ${#numbers.formatDecimal(item.precoFinal, 1, 2, 'POINT')}">R$ 0,00</span>
                     </div>
                 </div>
             </div>
 
             <div class="summary-row">
                 <span>Subtotal:</span>
-                <span>R$ 359,60</span>
+                <span th:text="'R$ ' + ${#numbers.formatDecimal(pedido.subtotal, 1, 2, 'POINT')}">R$ 0,00</span>
             </div>
 
-            <div class="summary-row frete free">
+            <div class="summary-row frete">
                 <span><i class="fa-solid fa-truck"></i> Frete:</span>
-                <span>Grátis</span>
+                <span th:text="'R$ ' + ${#numbers.formatDecimal(pedido.valorFrete, 1, 2, 'POINT')}">R$ 0,00</span>
             </div>
 
-            <div class="summary-row">
+            <div class="summary-row" th:if="${pedido.descontoPromocional != null && pedido.descontoPromocional > 0}">
                 <span>Desconto:</span>
-                <span>- R$ 0,00</span>
+                <span class="text-success" th:text="'- R$ ' + ${#numbers.formatDecimal(pedido.descontoPromocional, 1, 2, 'POINT')}">- R$ 0,00</span>
             </div>
 
             <div class="summary-row total">
                 <span>Total:</span>
-                <span>R$ 359,60</span>
+                <span th:text="'R$ ' + ${#numbers.formatDecimal(pedido.valorTotal, 1, 2, 'POINT')}">R$ 0,00</span>
             </div>
 
             <div style="font-size: 13px; color: #999; margin-top: 15px;">
@@ -1091,7 +1153,7 @@
 <!-- FOOTER -->
 <footer class="footer">
     <div class="footer-bottom">
-        <p>© 2024 BookNexus. Todos os direitos reservados.</p>
+        <p>© 2025 BookNexus. Todos os direitos reservados.</p>
         <p style="margin-top: 10px;">
             <i class="fa-brands fa-cc-visa"></i>
             <i class="fa-brands fa-cc-mastercard"></i>
@@ -1103,75 +1165,452 @@
     </div>
 </footer>
 
-<!-- SCRIPTS -->
 <script th:inline="javascript">
-    $(document).ready(function() {
-        // Máscaras
-        $('.cartao-numero').mask('0000 0000 0000 0000');
-        $('.validade').mask('00/00');
-        $('.cvv').mask('000');
-        $('.cpf').mask('000.000.000-00');
+    // Variáveis globais
+    let pedidoId = /*[[${pedido != null ? pedido.id : null}]]*/ null;
+    let totalPedido = /*[[${pedido != null ? pedido.valorTotal : 0.0}]]*/ 0;
+    let totalComFrete = totalPedido;
+    let clienteId = /*[[${pedido != null && pedido.cliente != null ? pedido.cliente.id : null}]]*/ null;
 
-        // Badge do carrinho
-        const cartBadge = document.querySelector('.cart-badge');
-        if (cartBadge && cartBadge.textContent === '0') {
-            cartBadge.style.display = 'none';
+    // ===== FUNÇÃO PARA OBTER TOKEN CSRF =====
+    function getCsrfToken() {
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+        return { token: csrfToken, header: csrfHeader };
+    }
+
+    // ===== FUNÇÃO PARA LIMPAR CARRINHO =====
+    function limparCarrinho() {
+        const csrf = getCsrfToken();
+        const headers = {};
+        if (csrf.token && csrf.header) {
+            headers[csrf.header] = csrf.token;
         }
+
+        return fetch('/carrinho/limpar-carrinho-cliente', {
+            method: 'POST',
+            headers: headers
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.sucesso) {
+                    console.log('Carrinho limpo com sucesso');
+                } else {
+                    console.error('Erro ao limpar carrinho:', data.mensagem);
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao limpar carrinho:', error);
+            });
+    }
+
+    // ===== FUNÇÃO PARA REDIRECIONAR APÓS PAGAMENTO =====
+    function redirecionarAposPagamento() {
+        limparCarrinho().finally(() => {
+            Swal.fire({
+                title: 'Pagamento Confirmado!',
+                text: 'Seu pagamento foi processado com sucesso. Obrigado por comprar na BookNexus!',
+                icon: 'success',
+                confirmButtonText: 'Ver Meus Pedidos',
+                confirmButtonColor: '#1e88e5',
+                showCancelButton: true,
+                cancelButtonText: 'Continuar Comprando',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // CORREÇÃO: caminho correto para listagem de pedidos do cliente
+                    window.location.href = `/pedidos/cliente/${clienteId}`;
+                } else {
+                    window.location.href = '/home';
+                }
+            });
+        });
+    }
+
+    // ===== FUNÇÃO PARA MOSTRAR POP-UP DE ERRO =====
+    function mostrarPopUpErro(mensagem) {
+        Swal.fire({
+            title: 'Erro no Pagamento!',
+            text: mensagem || 'Ocorreu um erro ao processar seu pagamento. Tente novamente.',
+            icon: 'error',
+            confirmButtonText: 'Tentar Novamente',
+            confirmButtonColor: '#dc3545'
+        });
+    }
+
+    // ===== VALIDAÇÃO DO NOVO CARTÃO =====
+    function validarNovoCartao() {
+        let valido = true;
+        const numero = document.getElementById('novoNumero').value.replace(/\s/g, '');
+        const nome = document.getElementById('novoNome').value.trim();
+        const cvv = document.getElementById('novoCvv').value;
+        const bandeira = document.getElementById('novaBandeira').value;
+
+        if (!numero || numero.length !== 16) {
+            document.getElementById('erroNumero').style.display = 'block';
+            document.getElementById('novoNumero').classList.add('error');
+            valido = false;
+        } else {
+            document.getElementById('erroNumero').style.display = 'none';
+            document.getElementById('novoNumero').classList.remove('error');
+        }
+
+        if (!nome) {
+            document.getElementById('erroNome').style.display = 'block';
+            document.getElementById('novoNome').classList.add('error');
+            valido = false;
+        } else {
+            document.getElementById('erroNome').style.display = 'none';
+            document.getElementById('novoNome').classList.remove('error');
+        }
+
+        if (!cvv || cvv.length !== 3) {
+            document.getElementById('erroCvv').style.display = 'block';
+            document.getElementById('novoCvv').classList.add('error');
+            valido = false;
+        } else {
+            document.getElementById('erroCvv').style.display = 'none';
+            document.getElementById('novoCvv').classList.remove('error');
+        }
+
+        if (!bandeira) {
+            document.getElementById('erroBandeira').style.display = 'block';
+            document.getElementById('novaBandeira').classList.add('error');
+            valido = false;
+        } else {
+            document.getElementById('erroBandeira').style.display = 'none';
+            document.getElementById('novaBandeira').classList.remove('error');
+        }
+
+        return valido;
+    }
+
+    // ===== ADICIONAR NOVO CARTÃO =====
+    function adicionarNovoCartao() {
+        if (!validarNovoCartao()) return;
+
+        const numero = document.getElementById('novoNumero').value.replace(/\s/g, '');
+        const nome = document.getElementById('novoNome').value;
+        const cvv = document.getElementById('novoCvv').value;
+        const bandeira = document.getElementById('novaBandeira').value;
+
+        const csrf = getCsrfToken();
+        const headers = { 'Content-Type': 'application/json' };
+        if (csrf.token && csrf.header) {
+            headers[csrf.header] = csrf.token;
+        }
+
+        const cartao = {
+            numeroCartao: numero,
+            nomeImpresso: nome,
+            codigoSeguranca: cvv,
+            bandeira: bandeira
+        };
+
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+        btn.disabled = true;
+
+        fetch(`/admin/clientes/${clienteId}/cartoes/adicionar`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(cartao)
+        })
+            .then(response => {
+                if (response.ok) return response.json();
+                return response.text().then(text => { throw new Error(text); });
+            })
+            .then(() => {
+                Swal.fire({
+                    title: 'Cartão Adicionado!',
+                    text: 'Novo cartão cadastrado com sucesso.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => location.reload());
+            })
+            .catch(error => {
+                const msgDiv = document.getElementById('msgNovoCartao');
+                msgDiv.style.display = 'block';
+                msgDiv.className = 'alert alert-error';
+                msgDiv.innerHTML = '<i class="fa-solid fa-exclamation-circle"></i> Erro: ' + error.message;
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                setTimeout(() => msgDiv.style.display = 'none', 3000);
+            });
+    }
+
+    // ===== INICIALIZAÇÃO =====
+    $(document).ready(function() {
+        $('#novoNumero').mask('0000 0000 0000 0000');
+        $('#novoCvv').mask('000');
+
+        $('.valor-cartao').on('input', function() {
+            let valor = parseFloat($(this).val()) || 0;
+            if (valor < 10 && valor > 0) {
+                $(this).css('border-color', '#e53935');
+            } else {
+                $(this).css('border-color', '#ddd');
+            }
+            calcularTotalPagamento();
+        });
+
+        $('.cartao-item').on('click', function(e) {
+            if (!$(e.target).is('input')) {
+                $(this).toggleClass('selected');
+                calcularTotalPagamento();
+            }
+        });
     });
 
-    // Selecionar método de pagamento
+    // ===== SELEÇÃO DE MÉTODO =====
     function selecionarMetodo(metodo) {
-        // Atualizar tabs
-        document.querySelectorAll('.method-tab').forEach(tab => {
-            tab.classList.remove('active');
-        });
+        const tabs = document.querySelectorAll('.method-tab');
+        tabs.forEach(tab => tab.classList.remove('active'));
         event.currentTarget.classList.add('active');
 
-        // Mostrar seção correspondente
         document.getElementById('cartao-section').style.display = metodo === 'cartao' ? 'block' : 'none';
         document.getElementById('pix-section').style.display = metodo === 'pix' ? 'block' : 'none';
         document.getElementById('boleto-section').style.display = metodo === 'boleto' ? 'block' : 'none';
     }
 
-    // Copiar chave PIX
+    // ===== TOGGLE NOVO CARTÃO =====
+    function toggleNovoCartao() {
+        const form = document.getElementById('novoCartaoForm');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // ===== CALCULAR TOTAL PAGO COM CARTÕES =====
+    function calcularTotalPagamento() {
+        let totalPago = 0;
+
+        document.querySelectorAll('.cartao-item.selected').forEach(item => {
+            const valor = parseFloat(item.querySelector('.valor-cartao').value) || 0;
+            if (valor >= 10) totalPago += valor;
+        });
+
+        document.getElementById('totalCartoes').textContent = totalPago.toFixed(2).replace('.', ',');
+        document.getElementById('valorTotalPago').style.display = totalPago > 0 ? 'block' : 'none';
+
+        const valorRestante = Math.max(0, totalComFrete - totalPago);
+        document.getElementById('valorRestante').textContent = valorRestante.toFixed(2).replace('.', ',');
+
+        const restanteContainer = document.getElementById('valorRestanteContainer');
+        if (valorRestante <= 0.01) {
+            restanteContainer.className = 'valor-restante verde';
+            restanteContainer.innerHTML = '<strong>✓ Pagamento completo!</strong> Valor restante: R$ ' + valorRestante.toFixed(2).replace('.', ',');
+        } else if (totalPago > 0) {
+            restanteContainer.className = 'valor-restante';
+            restanteContainer.innerHTML = '<strong>Valor restante a pagar:</strong> R$ ' + valorRestante.toFixed(2).replace('.', ',');
+        } else {
+            restanteContainer.className = 'valor-restante';
+            restanteContainer.innerHTML = '<strong>Valor restante a pagar:</strong> R$ ' + totalComFrete.toFixed(2).replace('.', ',');
+        }
+
+        return { totalPago, valorRestante };
+    }
+
+    // ===== COPIAR CHAVE PIX =====
     function copiarPix() {
-        navigator.clipboard.writeText('00020126580014br.gov.bcb.pix0136c56c5e...');
-        alert('Chave PIX copiada!');
+        const chavePix = '00020126580014br.gov.bcb.pix0136c56c5e-1234-5678-9abc-def012345678';
+        navigator.clipboard.writeText(chavePix);
+        Swal.fire({
+            title: 'Chave PIX Copiada!',
+            text: 'A chave PIX foi copiada para sua área de transferência.',
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false
+        });
     }
 
-    // Gerar boleto
+    // ===== GERAR BOLETO =====
     function gerarBoleto() {
-        window.location.href = '/boleto/gerar';
+        const csrf = getCsrfToken();
+        const headers = {};
+        if (csrf.token && csrf.header) {
+            headers[csrf.header] = csrf.token;
+        }
+
+        Swal.fire({
+            title: 'Gerando Boleto',
+            text: 'Aguarde enquanto geramos seu boleto...',
+            icon: 'info',
+            showConfirmButton: false,
+            timer: 1500
+        });
+
+        fetch(`/pagamentos/api/processar`, {
+            method: 'POST',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pedidoId: pedidoId,
+                cupons: [],
+                cartoes: []
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.sucesso) {
+                    confirmarPagamento(data.pagamentoId);
+                } else {
+                    mostrarPopUpErro(data.erro || 'Erro ao gerar boleto');
+                }
+            })
+            .catch(error => mostrarPopUpErro(error.message));
     }
 
-    // Finalizar compra
+    // ===== CONFIRMAR PAGAMENTO =====
+    function confirmarPagamento(pagamentoId) {
+        const csrf = getCsrfToken();
+        const headers = {};
+        if (csrf.token && csrf.header) {
+            headers[csrf.header] = csrf.token;
+        }
+
+        fetch(`/pagamentos/api/${pagamentoId}/confirmar`, {
+            method: 'POST',
+            headers: headers
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.sucesso) {
+                    redirecionarAposPagamento();
+                } else {
+                    mostrarPopUpErro(data.erro || 'Erro ao confirmar pagamento');
+                }
+            })
+            .catch(error => mostrarPopUpErro(error.message));
+    }
+
+    // ===== FINALIZAR COMPRA =====
     function finalizarCompra() {
         const termos = document.getElementById('termos').checked;
-
         if (!termos) {
-            alert('Você deve aceitar os termos para continuar');
+            Swal.fire({
+                title: 'Aceite os Termos',
+                text: 'Você deve aceitar os Termos e Condições para continuar.',
+                icon: 'warning',
+                confirmButtonText: 'Ok'
+            });
             return;
         }
 
-        // Validar método selecionado
         const metodoAtivo = document.querySelector('.method-tab.active span').textContent;
 
         if (metodoAtivo === 'Cartão de Crédito') {
-            // Validar campos do cartão
-            const numero = document.getElementById('cartaoNumero').value;
-            const nome = document.getElementById('cartaoNome').value;
-            const validade = document.getElementById('cartaoValidade').value;
-            const cvv = document.getElementById('cartaoCvv').value;
+            processarPagamentoCartao();
+        } else if (metodoAtivo === 'PIX') {
+            processarPagamentoPix();
+        } else if (metodoAtivo === 'Boleto') {
+            gerarBoleto();
+        }
+    }
 
-            if (!numero || !nome || !validade || !cvv) {
-                alert('Preencha todos os dados do cartão');
+    // ===== PROCESSAR PAGAMENTO COM CARTÃO =====
+    function processarPagamentoCartao() {
+        const cartoesSelecionados = [];
+        let totalCartoes = 0;
+
+        document.querySelectorAll('.cartao-item.selected').forEach(item => {
+            const cartaoId = item.getAttribute('data-cartao-id');
+            const valor = parseFloat(item.querySelector('.valor-cartao').value) || 0;
+
+            if (valor > 0 && valor < 10) {
+                mostrarPopUpErro('Cada cartão deve pagar no mínimo R$ 10,00');
                 return;
             }
+
+            if (valor >= 10) {
+                cartoesSelecionados.push({ id: parseInt(cartaoId), valor: valor, parcelas: 1 });
+                totalCartoes += valor;
+            }
+        });
+
+        if (cartoesSelecionados.length === 0) {
+            mostrarPopUpErro('Selecione pelo menos um cartão e informe um valor mínimo de R$ 10,00');
+            return;
         }
 
-        // Aqui você faria a chamada AJAX para processar o pagamento
-        console.log('Processando pagamento...');
-        window.location.href = '/pedido/confirmacao';
+        if (totalCartoes < totalComFrete - 0.01) {
+            mostrarPopUpErro(`Valor total dos cartões (R$ ${totalCartoes.toFixed(2).replace('.', ',')}) é insuficiente para cobrir o pedido de R$ ${totalComFrete.toFixed(2).replace('.', ',')}`);
+            return;
+        }
+
+        const csrf = getCsrfToken();
+        const headers = { 'Content-Type': 'application/json' };
+        if (csrf.token && csrf.header) {
+            headers[csrf.header] = csrf.token;
+        }
+
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...';
+        btn.disabled = true;
+
+        fetch('/pagamentos/api/processar', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                pedidoId: pedidoId,
+                cupons: [],
+                cartoes: cartoesSelecionados
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                if (data.sucesso) {
+                    confirmarPagamento(data.pagamentoId);
+                } else {
+                    mostrarPopUpErro(data.erro || 'Erro no processamento do pagamento');
+                }
+            })
+            .catch(error => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                mostrarPopUpErro(error.message);
+            });
+    }
+
+    // ===== PROCESSAR PAGAMENTO PIX =====
+    function processarPagamentoPix() {
+        const csrf = getCsrfToken();
+        const headers = { 'Content-Type': 'application/json' };
+        if (csrf.token && csrf.header) {
+            headers[csrf.header] = csrf.token;
+        }
+
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...';
+        btn.disabled = true;
+
+        fetch('/pagamentos/api/processar', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                pedidoId: pedidoId,
+                cupons: [],
+                cartoes: []
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                if (data.sucesso) {
+                    confirmarPagamento(data.pagamentoId);
+                } else {
+                    mostrarPopUpErro(data.erro || 'Erro no processamento do PIX');
+                }
+            })
+            .catch(error => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                mostrarPopUpErro(error.message);
+            });
     }
 </script>
 

@@ -52,7 +52,7 @@ public class Cliente {
 
     public Cliente() {}
 
-    // SUGESTÃO - incluir todos os campos obrigatórios
+    // Inclui todos os campos obrigatórios
     public Cliente(String nome, String cpf, String email, String senha, Genero genero, LocalDate dataNascimento) {
         this.nome = nome;
         this.cpf = cpf;
