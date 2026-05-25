@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <title>BookNexus</title>
 
+    <!-- META TAGS PARA CSRF (ADICIONADAS) -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
     <style>
         /* ===== RESET ===== */
         body {
@@ -106,6 +110,7 @@
             color: white;
             font-size: 14px;
             min-width: 180px;
+            cursor: pointer;
         }
 
         .cliente-selector option {
@@ -118,10 +123,26 @@
             display: flex;
             align-items: center;
             gap: 5px;
+            position: relative;
         }
 
         .carrinho-link:hover, .profile-link:hover {
             opacity: 0.8;
+        }
+
+        /* Badge do carrinho */
+        .carrinho-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #e53935;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 18px;
+            text-align: center;
         }
 
         /* ===== NAV ===== */
@@ -164,12 +185,6 @@
             font-size: 28px;
             color: #1e3c72;
             text-align: center;
-        }
-
-        .section-subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 20px;
         }
 
         /* ===== GRID ===== */
@@ -269,6 +284,10 @@
             pointer-events: none;
             cursor: default;
             opacity: 0.7;
+        }
+
+        .btn-success {
+            background: #28a745 !important;
         }
 
         /* ===== CLIENT AREA ===== */
@@ -426,11 +445,6 @@
         }
 
         /* ===== LOADING STATE ===== */
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
         .btn-loading {
             position: relative;
             color: transparent !important;
@@ -455,6 +469,12 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+
+        .disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            cursor: default;
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -475,7 +495,7 @@
             <option value="">Selecione seu cliente</option>
         </select>
 
-        <a href="#" id="carrinhoLink" class="carrinho-link" title="Carrinho">
+        <a href="/carrinho" id="carrinhoLink" class="carrinho-link" title="Carrinho">
             <i class="fa-solid fa-cart-shopping fa-2x"></i>
         </a>
 
@@ -502,16 +522,6 @@
     <a href="#" class="btn btn-secondary" onclick="return explorarCatalogo()">Explorar Catálogo</a>
 </section>
 
-<!-- ÁREA DO CLIENTE -->
-<div class="client-area" id="clientArea">
-    <div class="client-info">
-        <span class="client-welcome" id="welcomeMessage">Bem-vindo Visitante!</span>
-    </div>
-    <div class="client-actions" id="clientActions">
-        <a href="#" id="pedidosLink">Meus Pedidos</a>
-        <a href="#" id="trocasLink" onclick="return abrirTrocas();">Minhas Trocas</a>
-    </div>
-</div>
 
 <!-- TÍTULO DA SEÇÃO -->
 <h2 class="section-title">📚 Todos os Livros</h2>
@@ -555,7 +565,7 @@
 
 <!-- FOOTER -->
 <div style="background: #1e3c72; color: white; text-align: center; padding: 30px; margin-top: 40px;">
-    <p>© 2025 BookNexus - Todos os direitos reservados</p>
+    <p>© 2026 BookNexus - Todos os direitos reservados</p>
     <p style="margin-top: 5px;">
         <a th:href="@{/admin}" style="font-size: 12px; color: #aaa; text-decoration: none;">
             ⚙ Painel Administrativo
@@ -568,21 +578,35 @@
     let clienteSelecionado = null;
     let clienteNome = '';
 
+    // ===== FUNÇÃO PARA OBTER TOKEN CSRF (ADICIONADA) =====
+    function getCsrfToken() {
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+        return { token: csrfToken, header: csrfHeader };
+    }
+
     // ===== INICIALIZAÇÃO =====
     document.addEventListener('DOMContentLoaded', function() {
         console.log('DOM carregado, iniciando aplicação...');
+
+        // Tentar recuperar cliente da sessionStorage
+        const clienteSalvo = sessionStorage.getItem('clienteSelecionado');
+        const clienteNomeSalvo = sessionStorage.getItem('clienteNome');
+
+        if (clienteSalvo && clienteNomeSalvo) {
+            clienteSelecionado = clienteSalvo;
+            clienteNome = clienteNomeSalvo;
+        }
+
         carregarClientes();
         inicializarBusca();
         inicializarLinks();
 
-        // Verifica se há cliente salvo na sessão (via atributo Thymeleaf)
-        const clienteSessao = /*[[${clienteId}]]*/ null;
-        const clienteNomeSessao = /*[[${nomeCliente}]]*/ 'Visitante';
-
-        if (clienteSessao) {
-            clienteSelecionado = clienteSessao;
-            clienteNome = clienteNomeSessao;
+        // Se já tinha cliente salvo, atualizar a interface
+        if (clienteSelecionado) {
             atualizarInterfaceCliente();
+            const selector = document.getElementById('clienteSelector');
+            if (selector) selector.value = clienteSelecionado;
         }
     });
 
@@ -592,20 +616,18 @@
 
         fetch('/admin/clientes/api/para-seletor')
             .then(response => {
-                console.log('Resposta recebida:', response.status);
                 if (!response.ok) {
                     throw new Error(`Erro HTTP: ${response.status}`);
                 }
                 return response.json();
             })
             .then(clientes => {
-                console.log('Clientes carregados:', clientes);
+                console.log('Clientes carregados:', clientes.length);
 
                 const selector = document.getElementById('clienteSelector');
                 selector.innerHTML = '<option value="">Selecione seu cliente</option>';
 
                 if (clientes.length === 0) {
-                    console.log('Nenhum cliente encontrado no banco de dados');
                     const option = document.createElement('option');
                     option.value = "";
                     option.textContent = "Nenhum cliente cadastrado";
@@ -621,124 +643,73 @@
                     selector.appendChild(option);
                 });
 
-                // Se já havia um cliente selecionado, mantém a seleção
+                // Se já tinha cliente selecionado, manter seleção
                 if (clienteSelecionado) {
                     selector.value = clienteSelecionado;
                 }
             })
             .catch(error => {
-                console.error('Erro detalhado ao carregar clientes:', error);
-                mostrarAlerta('Erro ao carregar clientes. Verifique o console.', 'error');
-
-                // Dados de exemplo para teste (remover em produção)
-                adicionarClientesExemplo();
+                console.error('Erro ao carregar clientes:', error);
+                mostrarAlerta('Erro ao carregar clientes', 'error');
             });
-    }
-
-    // Função temporária para teste - REMOVER QUANDO O BACKEND ESTIVER FUNCIONANDO
-    function adicionarClientesExemplo() {
-        console.log('Adicionando clientes de exemplo para teste');
-        const selector = document.getElementById('clienteSelector');
-
-        const clientesExemplo = [
-            { id: 1, nome: "João Silva (exemplo)" },
-            { id: 2, nome: "Maria Santos (exemplo)" },
-            { id: 3, nome: "Pedro Oliveira (exemplo)" }
-        ];
-
-        clientesExemplo.forEach(cliente => {
-            const option = document.createElement('option');
-            option.value = cliente.id;
-            option.textContent = cliente.nome;
-            selector.appendChild(option);
-        });
     }
 
     function selecionarCliente() {
         const selector = document.getElementById('clienteSelector');
         const novoClienteId = selector.value;
 
-        // Se não selecionou nenhum cliente válido
         if (!novoClienteId || novoClienteId === "") {
             clienteSelecionado = null;
             clienteNome = '';
+            sessionStorage.removeItem('clienteSelecionado');
+            sessionStorage.removeItem('clienteNome');
             atualizarInterfaceCliente();
-            mostrarAlerta('Nenhum cliente selecionado', 'info');
             return;
         }
 
         const novoClienteNome = selector.options[selector.selectedIndex].text;
 
-        if (novoClienteId === clienteSelecionado) return; // Mesmo cliente
+        if (novoClienteId === clienteSelecionado) return;
 
         clienteSelecionado = novoClienteId;
         clienteNome = novoClienteNome;
 
-        // Atualiza a interface
+        // Salvar na sessionStorage para persistir entre páginas
+        sessionStorage.setItem('clienteSelecionado', clienteSelecionado);
+        sessionStorage.setItem('clienteNome', clienteNome);
+
         atualizarInterfaceCliente();
 
-        // Salva no backend (se necessário)
-        if (clienteSelecionado) {
-            fetch(`/admin/clientes/api/${clienteSelecionado}/selecionar`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+        // Salva no backend
+        fetch(`/admin/clientes/api/${clienteSelecionado}/selecionar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+            .then(() => {
+                mostrarAlerta(`Cliente selecionado: ${clienteNome}`, 'success');
             })
-                .then(response => {
-                    if (response.ok) {
-                        mostrarAlerta(`Cliente selecionado: ${clienteNome}`, 'success');
-                    } else {
-                        throw new Error('Erro na resposta do servidor');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro ao salvar seleção:', error);
-                    mostrarAlerta('Cliente selecionado com sucesso!', 'success');
-                });
-        }
+            .catch(error => {
+                console.error('Erro ao salvar seleção:', error);
+                mostrarAlerta(`Cliente ${clienteNome} selecionado`, 'success');
+            });
     }
 
     function atualizarInterfaceCliente() {
         const welcomeMsg = document.getElementById('welcomeMessage');
-        const carrinhoLink = document.getElementById('carrinhoLink');
-        const perfilLink = document.getElementById('perfilLink');
         const pedidosLink = document.getElementById('pedidosLink');
+        const carrinhoLink = document.getElementById('carrinhoLink');
 
         if (clienteSelecionado) {
             welcomeMsg.textContent = `Bem-vindo ${clienteNome}!`;
-
-            // CORRIGIDO: Carrinho (sem ID)
-            carrinhoLink.href = `/carrinho`;
-
-            // CORRIGIDO: "Minha Conta" agora aponta para pedidos do cliente
-            perfilLink.href = `/pedidos/cliente/${clienteSelecionado}`;
-
-            // CORRIGIDO: Pedidos - usando o endpoint correto do PedidoController
             pedidosLink.href = `/pedidos/cliente/${clienteSelecionado}`;
-
-            // Trocas (mantém ID)
-            document.getElementById('trocasLink').onclick = function() {
-                window.location.href = `/cliente/${clienteSelecionado}/trocas`;
-                return false;
-            };
-
-            // Habilita links
-            carrinhoLink.classList.remove('disabled');
-            perfilLink.classList.remove('disabled');
             pedidosLink.classList.remove('disabled');
+            // Atualizar link do carrinho para incluir o clienteId (para futuras implementações)
+            carrinhoLink.href = `/carrinho?clienteId=${clienteSelecionado}`;
         } else {
             welcomeMsg.textContent = 'Bem-vindo Visitante!';
-
-            // Links voltam para página inicial ou ficam desabilitados
-            carrinhoLink.href = '#';
-            perfilLink.href = '#';
             pedidosLink.href = '#';
-
-            // Adiciona classe disabled para estilizar
-            carrinhoLink.classList.add('disabled');
-            perfilLink.classList.add('disabled');
             pedidosLink.classList.add('disabled');
+            carrinhoLink.href = '/carrinho';
         }
     }
 
@@ -747,6 +718,7 @@
         const perfilLink = document.getElementById('perfilLink');
         const pedidosLink = document.getElementById('pedidosLink');
 
+        // Carrinho - valida se cliente está selecionado
         carrinhoLink.addEventListener('click', function(e) {
             if (!clienteSelecionado) {
                 e.preventDefault();
@@ -754,18 +726,24 @@
             }
         });
 
+        // CORRIGIDO: Link do perfil (Minha Conta) - agora vai para pedidos
         perfilLink.addEventListener('click', function(e) {
+            e.preventDefault();
             if (!clienteSelecionado) {
-                e.preventDefault();
                 mostrarAlerta('Selecione um cliente para acessar sua conta.', 'info');
+            } else {
+                // Redirecionar para a lista de pedidos do cliente
+                window.location.href = `/pedidos/cliente/${clienteSelecionado}`;
             }
         });
 
+        // Link de Meus Pedidos
         pedidosLink.addEventListener('click', function(e) {
             if (!clienteSelecionado) {
                 e.preventDefault();
                 mostrarAlerta('Selecione um cliente para ver seus pedidos.', 'info');
             }
+            // Se o cliente está selecionado, o href já está correto
         });
     }
 
@@ -774,7 +752,7 @@
             mostrarAlerta('Selecione um cliente para ver as trocas.', 'info');
             return false;
         }
-        window.location.href = `/cliente/${clienteSelecionado}/trocas`;
+        window.location.href = `/devolucoes/cliente/${clienteSelecionado}`;
         return false;
     }
 
@@ -783,7 +761,7 @@
         return false;
     }
 
-    // ===== CARRINHO =====
+    // ===== CARRINHO COM CSRF (MODIFICADA) =====
     function adicionarAoCarrinho(produtoId) {
         if (!clienteSelecionado) {
             mostrarAlerta('Por favor, selecione um cliente primeiro!', 'error');
@@ -793,40 +771,55 @@
         const botao = event.target.closest('.btn');
         const textoOriginal = botao.innerHTML;
 
-        // Feedback visual de loading
         botao.classList.add('btn-loading');
         botao.disabled = true;
 
-        // CORRIGIDO: Endpoint do carrinho
-        fetch(`/carrinho/adicionar`, {
+        // Armazenar na sessionStorage o cliente atual para o CarrinhoController recuperar
+        sessionStorage.setItem('clienteAtualCarrinho', clienteSelecionado);
+
+        // Obter token CSRF
+        const csrf = getCsrfToken();
+
+        // Configurar headers com CSRF
+        const headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        };
+
+        // Adicionar token CSRF se existir (SOLUÇÃO 1)
+        if (csrf.token && csrf.header) {
+            headers[csrf.header] = csrf.token;
+        }
+
+        // Chamar o endpoint do carrinho com headers CSRF
+        fetch('/carrinho/adicionar', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
+            headers: headers,
             body: `produtoId=${produtoId}&quantidade=1`
         })
             .then(response => {
                 if (response.redirected) {
-                    // Se foi redirecionado para /carrinho, deu certo
+                    mostrarAlerta('Livro adicionado ao carrinho!', 'success');
                     window.location.href = response.url;
-                    return;
+                    return null;
                 }
                 if (!response.ok) {
-                    return response.text().then(text => { throw new Error(text); });
+                    return response.text().then(text => { throw new Error(text || 'Erro ao adicionar'); });
                 }
-                // Se chegou aqui, a requisição foi bem sucedida
-                mostrarAlerta('Livro adicionado ao carrinho!', 'success');
-
-                // Redireciona para o carrinho após 1 segundo
-                setTimeout(() => {
-                    window.location.href = '/carrinho';
-                }, 1000);
-
-                return response.json();
+                return response.text();
             })
             .then(data => {
-                if (data && data.quantidadeItens) {
-                    atualizarContadorCarrinho(data.quantidadeItens);
+                if (data !== null) {
+                    botao.classList.remove('btn-loading');
+                    botao.classList.add('btn-success');
+                    botao.innerHTML = '<i class="fa-solid fa-check"></i> Adicionado!';
+
+                    mostrarAlerta('Livro adicionado ao carrinho!', 'success');
+
+                    setTimeout(() => {
+                        botao.classList.remove('btn-success');
+                        botao.innerHTML = textoOriginal;
+                        botao.disabled = false;
+                    }, 2000);
                 }
             })
             .catch(error => {
@@ -838,38 +831,6 @@
             });
     }
 
-    function atualizarContadorCarrinho(quantidade) {
-        const container = document.querySelector('.carrinho-link');
-        if (!container) return;
-
-        // Remove badge antigo se existir
-        const badgeAntigo = document.querySelector('.carrinho-badge');
-        if (badgeAntigo) badgeAntigo.remove();
-
-        if (quantidade > 0) {
-            // Cria novo badge
-            const badge = document.createElement('span');
-            badge.className = 'carrinho-badge';
-            badge.textContent = quantidade;
-            badge.style.cssText = `
-                position: absolute;
-                top: -8px;
-                right: -8px;
-                background: #e53935;
-                color: white;
-                border-radius: 50%;
-                padding: 2px 6px;
-                font-size: 12px;
-                font-weight: bold;
-                min-width: 18px;
-                text-align: center;
-            `;
-
-            container.style.position = 'relative';
-            container.appendChild(badge);
-        }
-    }
-
     // ===== BUSCA =====
     function inicializarBusca() {
         const input = document.getElementById('searchInput');
@@ -879,7 +840,6 @@
 
         let debounceTimer;
 
-        // Fecha dropdown ao clicar fora
         document.addEventListener('click', (e) => {
             if (!dropdown.contains(e.target) && !input.contains(e.target)) {
                 dropdown.style.display = 'none';
@@ -940,43 +900,20 @@
 
     // ===== UTILITÁRIOS =====
     function mostrarAlerta(mensagem, tipo) {
-        // Remove alertas existentes
         const alertasExistentes = document.querySelectorAll('.alert');
         alertasExistentes.forEach(alerta => alerta.remove());
 
-        // Cria novo alerta
         const alerta = document.createElement('div');
         alerta.className = `alert alert-${tipo}`;
         alerta.textContent = mensagem;
 
-        // Insere após o header
         const header = document.querySelector('.header');
         header.insertAdjacentElement('afterend', alerta);
 
-        // Remove o alerta após 3 segundos
         setTimeout(() => {
             if (alerta.parentNode) alerta.remove();
         }, 3000);
     }
-
-    // CSS adicional para estados
-    const style = document.createElement('style');
-    style.textContent = `
-        .disabled {
-            opacity: 0.5;
-            pointer-events: none;
-            cursor: default;
-        }
-
-        .btn-success {
-            background: #28a745 !important;
-        }
-
-        .carrinho-link, .profile-link {
-            position: relative;
-        }
-    `;
-    document.head.appendChild(style);
 </script>
 
 </body>

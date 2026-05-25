@@ -1,7 +1,9 @@
 package br.com.java.e_commerce.nexus.controller;
 
 import br.com.java.e_commerce.nexus.model.cliente.Cliente;
+import br.com.java.e_commerce.nexus.model.cliente.Endereco;
 import br.com.java.e_commerce.nexus.model.venda.Cupom;
+import br.com.java.e_commerce.nexus.model.venda.ItemPedido;
 import br.com.java.e_commerce.nexus.model.venda.Pagamento;
 import br.com.java.e_commerce.nexus.model.venda.Pedido;
 import br.com.java.e_commerce.nexus.model.enums.StatusPedido;
@@ -18,10 +20,13 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
+/**
+ * Controlador responsável por gerenciar todas as operações relacionadas a pedidos.
+ */
 @Controller
 @RequestMapping("/pedidos")
 public class PedidoController {
@@ -51,15 +56,36 @@ public class PedidoController {
     }
 
     @GetMapping("/cliente/{clienteId}")
-    public String listarPorCliente(@PathVariable Long clienteId, Model model) {
+    public String listarPedidosPorCliente(@PathVariable Long clienteId, Model model) {
         Cliente cliente = clienteService.buscarPorId(clienteId)
                 .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
 
         List<Pedido> pedidos = pedidoService.listarPorCliente(clienteId);
-        model.addAttribute("pedidos", pedidos);
-        model.addAttribute("cliente", cliente);
 
-        // CORRIGIDO: Alterado de "cliente/pedidos/lista" para "cliente/pedidos"
+        long totalPedidos = pedidos.size();
+        long pedidosEmAndamento = pedidos.stream()
+                .filter(p -> p.getStatus() == StatusPedido.EM_ABERTO ||
+                        p.getStatus() == StatusPedido.PAGO ||
+                        p.getStatus() == StatusPedido.ENVIADO)
+                .count();
+
+        double valorTotalGasto = pedidos.stream()
+                .mapToDouble(p -> p.getValorTotal().doubleValue())
+                .sum();
+
+        Set<Integer> anosDisponiveis = new HashSet<>();
+        for (Pedido p : pedidos) {
+            anosDisponiveis.add(p.getDataCriacao().getYear());
+        }
+
+        model.addAttribute("cliente", cliente);
+        model.addAttribute("pedidos", pedidos);
+        model.addAttribute("totalPedidos", totalPedidos);
+        model.addAttribute("pedidosEmAndamento", pedidosEmAndamento);
+        model.addAttribute("valorTotalGasto", valorTotalGasto);
+        model.addAttribute("anosDisponiveis", anosDisponiveis);
+        model.addAttribute("semPedidos", pedidos.isEmpty());
+
         return "cliente/pedidos";
     }
 
@@ -132,49 +158,6 @@ public class PedidoController {
         return "redirect:/pedidos/" + id;
     }
 
-    // ===== DEVOLUÇÃO =====
-
-    @PostMapping("/{id}/solicitar-devolucao")
-    public String solicitarDevolucao(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        try {
-            Pedido pedido = pedidoService.buscarPorId(id)
-                    .orElseThrow(() -> new RuntimeException("Pedido não encontrado"));
-
-            if (pedido.getStatus() != StatusPedido.ENTREGUE) {
-                throw new RuntimeException("Somente pedidos entregues podem ser devolvidos");
-            }
-
-            pedidoService.atualizarStatus(id, StatusPedido.AGUARDANDO_DEVOLUCAO);
-            redirectAttributes.addFlashAttribute("sucesso", "Solicitação de devolução enviada!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("erro", e.getMessage());
-        }
-        return "redirect:/pedidos/" + id;
-    }
-
-    @PostMapping("/{id}/confirmar-devolucao")
-    public String confirmarDevolucao(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        try {
-            Cupom cupom = pedidoService.confirmarDevolucaoEGerarCupom(id);
-            redirectAttributes.addFlashAttribute("sucesso",
-                    "Devolução confirmada! Cupom de troca gerado: " + cupom.getCodigo());
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("erro", e.getMessage());
-        }
-        return "redirect:/pedidos/" + id;
-    }
-
-    @PostMapping("/{id}/negar-devolucao")
-    public String negarDevolucao(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        try {
-            pedidoService.atualizarStatus(id, StatusPedido.ENTREGUE);
-            redirectAttributes.addFlashAttribute("info", "Solicitação de devolução negada.");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("erro", e.getMessage());
-        }
-        return "redirect:/pedidos/" + id;
-    }
-
     // ===== RELATÓRIOS (ADMIN) =====
 
     @GetMapping("/admin/analise")
@@ -207,7 +190,7 @@ public class PedidoController {
         return "admin/pedidos/analise";
     }
 
-    // ===== API =====
+    // ===== API REST =====
 
     @GetMapping("/api/{id}")
     @ResponseBody
@@ -239,5 +222,59 @@ public class PedidoController {
         resultado.put("porProduto", pedidoService.calcularVendasPorProduto(inicio, fim));
 
         return ResponseEntity.ok(resultado);
+    }
+
+    @GetMapping("/api/{id}/detalhes")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> obterDetalhesPedido(@PathVariable Long id) {
+        Pedido pedido = pedidoService.buscarComDetalhes(id);
+
+        Map<String, Object> detalhes = new HashMap<>();
+        detalhes.put("id", pedido.getId());
+        detalhes.put("dataCriacao", pedido.getDataCriacao().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        detalhes.put("status", pedido.getStatus().getDescricao());
+        detalhes.put("subtotal", pedido.getSubtotal());
+        detalhes.put("descontoPromocional", pedido.getDescontoPromocional());
+        detalhes.put("valorFrete", pedido.getValorFrete());
+        detalhes.put("valorTotal", pedido.getValorTotal());
+        detalhes.put("resumoCupons", pedido.getResumoCuponsPromocionais());
+
+        Endereco end = pedido.getEnderecoEntrega();
+        if (end != null) {
+            String enderecoStr = String.format("%s %s, %s - %s/%s - CEP %s",
+                    end.getTipoLogradouro().getDescricao(),
+                    end.getRua(), end.getNumero(),
+                    end.getCidade(), end.getUf().getSigla(),
+                    end.getCep());
+            detalhes.put("enderecoEntrega", enderecoStr);
+        } else {
+            detalhes.put("enderecoEntrega", "Não informado");
+        }
+
+        if (pedido.getPagamento() != null) {
+            Pagamento pag = pedido.getPagamento();
+            Map<String, Object> pagInfo = new HashMap<>();
+            pagInfo.put("forma", pag.getFormaPagamento().getDescricao());
+            pagInfo.put("status", pag.getStatus().getDescricao());
+            pagInfo.put("data", pag.getDataPagamento().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            pagInfo.put("resumoCartoes", pag.getResumoCartoes());
+            detalhes.put("pagamento", pagInfo);
+        } else {
+            detalhes.put("pagamento", null);
+        }
+
+        List<Map<String, Object>> itensList = new ArrayList<>();
+        for (ItemPedido item : pedido.getItens()) {
+            Map<String, Object> itemMap = new HashMap<>();
+            itemMap.put("produtoTitulo", item.getProduto().getTitulo());
+            itemMap.put("produtoAutor", item.getProduto().getAutor());
+            itemMap.put("quantidade", item.getQuantidade());
+            itemMap.put("precoUnitario", item.getPrecoUnitario());
+            itemMap.put("subtotalItem", item.getPrecoTotal());
+            itensList.add(itemMap);
+        }
+        detalhes.put("itens", itensList);
+
+        return ResponseEntity.ok(detalhes);
     }
 }

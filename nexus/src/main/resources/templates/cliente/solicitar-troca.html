@@ -1,38 +1,778 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>Solicitar Troca - BookNexus</title>
-  <link rel="stylesheet" href="/css/style.css">
+    <meta charset="UTF-8">
+    <title>Solicitar Troca/Devolução - BookNexus</title>
+
+    <!-- CSRF -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+            background: #f4f9fb;
+            color: #333;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: linear-gradient(90deg, #1e88e5, #26a69a);
+            padding: 15px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo { font-size: 24px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .logo a { color: white; text-decoration: none; }
+        .logo i { font-size: 28px; }
+        .search-bar { flex: 1; max-width: 500px; margin: 0 30px; }
+        .search-bar form { display: flex; background: white; border-radius: 30px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .search-bar input { flex: 1; padding: 12px 20px; border: none; outline: none; font-size: 15px; }
+        .search-bar button { background: white; border: none; padding: 0 20px; color: #1e88e5; cursor: pointer; transition: 0.3s; font-size: 18px; }
+        .search-bar button:hover { background: #f0f0f0; }
+        .header-actions { display: flex; align-items: center; gap: 25px; }
+        .header-actions a { color: white; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .header-actions a:hover { opacity: 0.8; transform: translateY(-2px); }
+
+        /* ===== BREADCRUMB ===== */
+        .breadcrumb { padding: 15px 40px; background: white; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
+        .breadcrumb a { color: #1e88e5; text-decoration: none; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        .breadcrumb span { color: #666; }
+        .breadcrumb i { margin: 0 8px; color: #bbb; font-size: 11px; }
+
+        /* ===== HERO ===== */
+        .page-hero {
+            background: linear-gradient(135deg, #2a5298, #1e90ff);
+            color: white;
+            padding: 50px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .page-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%; right: -50%;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            transform: rotate(30deg);
+        }
+        .page-hero h1 {
+            font-size: 34px;
+            margin-bottom: 10px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+        }
+        .page-hero p { font-size: 16px; opacity: 0.9; position: relative; }
+
+        /* ===== CONTEÚDO ===== */
+        .content { max-width: 820px; margin: 0 auto; padding: 40px 40px 20px; }
+
+        /* ===== ALERTAS ===== */
+        .alert {
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+        .alert-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+        .alert-info    { background: #e3f2fd; color: #1e5fa8; border-left: 4px solid #1e88e5; }
+        .alert-error   { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+        .alert-warning { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+
+        /* ===== INFO CARD ===== */
+        .info-card {
+            background: #e3f2fd;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+        .info-card i { font-size: 28px; color: #1e88e5; margin-top: 2px; flex-shrink: 0; }
+        .info-card p { margin: 0 0 4px; color: #1e3c72; font-size: 14px; }
+        .info-card small { color: #555; font-size: 13px; }
+        .info-card.verde { background: #e8f5e9; }
+        .info-card.verde i { color: #388e3c; }
+        .info-card.verde p { color: #1b5e20; }
+
+        /* ===== CARD ===== */
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 28px 30px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+            margin-bottom: 25px;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .card-header i { font-size: 22px; color: #1e88e5; }
+        .card h2 { color: #1e3c72; font-size: 20px; }
+        .card-subtitle {
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 22px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* ===== LISTA DE ITENS ===== */
+        .items-list {
+            border: 1px solid #e8eef5;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 18px;
+        }
+        .items-header {
+            background: #f0f5fb;
+            padding: 11px 16px;
+            font-weight: 600;
+            color: #1e3c72;
+            border-bottom: 1px solid #e8eef5;
+            display: grid;
+            grid-template-columns: 34px 1fr auto;
+            gap: 14px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .item-row {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            display: grid;
+            grid-template-columns: 34px 1fr auto;
+            gap: 14px;
+            align-items: center;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .item-row:hover { background: #f8fbff; }
+        .item-row:last-child { border-bottom: none; }
+        .item-row.selecionado { background: #f0f8ff; }
+
+        /* Checkbox customizado */
+        .item-check-wrapper { display: flex; align-items: center; justify-content: center; }
+        .item-check {
+            width: 22px; height: 22px;
+            cursor: pointer;
+            accent-color: #1e88e5;
+        }
+
+        .item-info h4 { color: #1e3c72; font-size: 15px; margin-bottom: 4px; }
+        .item-info p { color: #888; font-size: 13px; margin: 0; }
+
+        .item-price {
+            font-weight: 700;
+            color: #26a69a;
+            font-size: 15px;
+            white-space: nowrap;
+        }
+
+        /* Ações de seleção */
+        .selection-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 0; }
+        .btn-sm {
+            padding: 7px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid #1e88e5;
+            background: white;
+            color: #1e88e5;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-sm:hover { background: #1e88e5; color: white; }
+
+        /* Total selecionado */
+        #totalSelecionado {
+            display: none;
+            background: #e8f5e9;
+            border-radius: 10px;
+            padding: 13px 18px;
+            margin-top: 15px;
+            align-items: center;
+            gap: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+        #totalSelecionado i { color: #388e3c; font-size: 22px; }
+        #totalSelecionado p { margin: 0; color: #1b5e20; font-size: 14px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Resumo financeiro */
+        .order-summary-box {
+            background: #f8faff;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .summary-row.total {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+            font-weight: bold;
+        }
+        .summary-note {
+            color: #999;
+            font-size: 12px;
+            margin-top: 10px;
+            display: block;
+        }
+
+        /* ===== FORMULÁRIO ===== */
+        .form-group { margin-bottom: 22px; }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #1e3c72;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .form-group label i { margin-right: 7px; color: #1e88e5; }
+        .required { color: #e53935; margin-left: 3px; }
+        .form-control {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #dde3ec;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.25s;
+            font-family: inherit;
+            background: #fafbfd;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #1e88e5;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(30,136,229,0.12);
+        }
+        textarea.form-control { resize: vertical; min-height: 100px; }
+        select.form-control { cursor: pointer; }
+
+        /* ===== BOTÕES PRINCIPAIS ===== */
+        .btn-group {
+            display: flex;
+            gap: 14px;
+            justify-content: flex-end;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+        .btn {
+            padding: 13px 32px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #1e88e5, #26a69a);
+            color: white;
+            box-shadow: 0 4px 12px rgba(30,136,229,0.25);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 7px 18px rgba(30,136,229,0.35); }
+        .btn-primary:disabled {
+            background: linear-gradient(135deg, #aac8e8, #9dcfc9);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            opacity: 0.7;
+        }
+        .btn-secondary {
+            background: white;
+            color: #1e88e5;
+            border: 2px solid #1e88e5;
+        }
+        .btn-secondary:hover { background: #1e88e5; color: white; }
+
+        /* ===== STEPPER (progresso visual) ===== */
+        .stepper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 30px;
+        }
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            flex: 1;
+            max-width: 120px;
+        }
+        .step-circle {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: #dde3ec;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.4s;
+        }
+        .step-circle.active { background: #1e88e5; color: white; box-shadow: 0 3px 10px rgba(30,136,229,0.35); }
+        .step-circle.done { background: #26a69a; color: white; }
+        .step-label { font-size: 11px; color: #999; font-weight: 600; text-align: center; }
+        .step-label.active { color: #1e88e5; }
+        .step-line { flex: 1; height: 2px; background: #dde3ec; max-width: 60px; }
+        .step-line.done { background: #26a69a; }
+
+        /* ===== FOOTER ===== */
+        .footer { background: #1e3c72; color: white; padding: 50px 40px 28px; margin-top: 60px; }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 35px; max-width: 1100px; margin: 0 auto; }
+        .footer-col h4 { margin-bottom: 18px; font-size: 16px; }
+        .footer-col a { display: block; color: rgba(255,255,255,0.75); text-decoration: none; margin-bottom: 9px; transition: 0.3s; font-size: 14px; }
+        .footer-col a:hover { color: white; transform: translateX(4px); }
+        .footer-bottom { text-align: center; padding-top: 35px; margin-top: 35px; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.55); font-size: 13px; }
+
+        /* ===== RESPONSIVO ===== */
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 14px; padding: 14px 18px; }
+            .search-bar { max-width: 100%; margin: 8px 0; }
+            .content { padding: 20px 18px; }
+            .card { padding: 20px; }
+            .items-header, .item-row { grid-template-columns: 34px 1fr; gap: 10px; }
+            .items-header > div:last-child, .item-row .item-price { grid-column: 2; }
+            .btn-group { flex-direction: column; }
+            .btn-group .btn { justify-content: center; }
+            .stepper { display: none; }
+            .summary-row { font-size: 13px; }
+        }
+    </style>
 </head>
 <body>
 
-<section class="admin-hero" style="background: linear-gradient(135deg, #1e90ff, #2a5298);">
-  <h1>Solicitar Troca de Produto</h1>
-</section>
-
-<div class="card" style="width:60%; margin:40px auto;">
-  <form>
-    <label>Produto</label>
-    <input type="text" value="Clean Code" disabled style="width:100%; padding:10px; margin-bottom:15px;">
-
-    <label>Motivo da Troca</label>
-    <select style="width:100%; padding:10px; margin-bottom:15px;">
-      <option>Produto com defeito</option>
-      <option>Produto errado</option>
-      <option>Arrependimento</option>
-      <option>Outro</option>
-    </select>
-
-    <label>Descrição Detalhada</label>
-    <textarea style="width:100%; padding:10px; height:100px; margin-bottom:15px;"></textarea>
-
-    <div style="text-align:center;">
-      <a href="/pedidos" class="btn">Confirmar Solicitação</a>
-      <a href="/pedidos" class="btn secondary">Cancelar</a>
+<!-- HEADER -->
+<header class="header">
+    <div class="logo">
+        <a href="/home">
+            <i class="fa-solid fa-book-open"></i>
+            BookNexus
+        </a>
     </div>
-  </form>
+    <div class="search-bar">
+        <form action="/buscar" method="get">
+            <input type="text" name="q" placeholder="Buscar livros...">
+            <button type="submit"><i class="fa-solid fa-search"></i></button>
+        </form>
+    </div>
+    <div class="header-actions">
+        <a href="/carrinho" title="Carrinho"><i class="fa-solid fa-cart-shopping fa-xl"></i></a>
+        <a href="/home" title="Voltar para Home"><i class="fa-solid fa-house fa-2xl"></i></a>
+    </div>
+</header>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+    <a href="/home">Home</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <a href="/home">Meus Pedidos</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Solicitar Troca/Devolução</span>
 </div>
 
+<!-- HERO -->
+<section class="page-hero">
+    <h1><i class="fa-solid fa-rotate-left"></i> Solicitar Troca/Devolução</h1>
+    <p th:text="'Pedido #' + ${pedido.id} + ' · ' + ${#temporals.format(pedido.dataCriacao, 'dd/MM/yyyy')}"></p>
+</section>
+
+<!-- CONTEÚDO -->
+<div class="content">
+
+    <!-- Alertas de flash -->
+    <div th:if="${sucesso}" class="alert alert-success">
+        <i class="fa-solid fa-check-circle"></i>
+        <span th:text="${sucesso}"></span>
+    </div>
+    <div th:if="${erro}" class="alert alert-error">
+        <i class="fa-solid fa-exclamation-circle"></i>
+        <span th:text="${erro}"></span>
+    </div>
+
+    <!-- Stepper de progresso -->
+    <div class="stepper">
+        <div class="step">
+            <div class="step-circle active"><i class="fa-solid fa-boxes-stacked" style="font-size:13px;"></i></div>
+            <div class="step-label active">Itens</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step">
+            <div class="step-circle"><i class="fa-solid fa-clipboard-list" style="font-size:13px;"></i></div>
+            <div class="step-label">Motivo</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step">
+            <div class="step-circle"><i class="fa-solid fa-paper-plane" style="font-size:13px;"></i></div>
+            <div class="step-label">Envio</div>
+        </div>
+    </div>
+
+    <!-- Info do pedido -->
+    <div class="info-card">
+        <i class="fa-solid fa-circle-info"></i>
+        <div>
+            <p>
+                <strong>Pedido entregue em: </strong>
+                <span th:if="${pedido.dataEntrega != null}" th:text="${#temporals.format(pedido.dataEntrega, 'dd/MM/yyyy')}"></span>
+                <span th:unless="${pedido.dataEntrega != null}">Data não disponível</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- FORMULÁRIO -->
+    <form id="formDevolucao" th:action="@{/devolucoes/solicitar}" method="post" novalidate>
+        <!-- CSRF Token -->
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <!-- ID do pedido -->
+        <input type="hidden" name="pedidoId" th:value="${pedido.id}"/>
+
+        <!-- ===== CARD 1: ITENS ===== -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fa-solid fa-boxes-stacked"></i>
+                <h2>Selecione os itens para devolução</h2>
+            </div>
+            <p class="card-subtitle">Marque os produtos que deseja devolver. Você pode devolver itens específicos ou o pedido completo.</p>
+
+            <!-- Lista de itens do pedido -->
+            <div class="items-list">
+                <div class="items-header">
+                    <div></div>
+                    <div>Produto</div>
+                    <div>Valor</div>
+                </div>
+
+                <div th:each="item : ${pedido.itens}"
+                     class="item-row"
+                     th:id="'row-' + ${item.id}"
+                     th:onclick="'toggleItem(' + ${item.id} + ')'">
+
+                    <div class="item-check-wrapper">
+                        <input type="checkbox"
+                               class="item-check"
+                               name="itensIds"
+                               th:id="'check-' + ${item.id}"
+                               th:value="${item.id}"
+                               th:data-preco-total="${item.precoTotal}"
+                               onclick="event.stopPropagation();"
+                               onchange="atualizarTotal()">
+                    </div>
+
+                    <div class="item-info">
+                        <h4 th:text="${item.produto.titulo}">Título do livro</h4>
+                        <p th:text="'Autor: ' + ${item.produto.autor}">Autor</p>
+                        <p th:text="'Quantidade: ' + ${item.quantidade}">Quantidade: 1</p>
+                    </div>
+
+                    <div class="item-price"
+                         th:text="'R$ ' + ${#numbers.formatDecimal(item.precoTotal, 1, 'COMMA', 2, 'POINT')}">
+                        R$ 0,00
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ações de seleção rápida -->
+            <div class="selection-actions">
+                <button type="button" class="btn-sm" onclick="selecionarTodos()">
+                    <i class="fa-regular fa-circle-check"></i> Selecionar todos
+                </button>
+                <button type="button" class="btn-sm" onclick="deselecionarTodos()">
+                    <i class="fa-regular fa-circle-xmark"></i> Desmarcar todos
+                </button>
+            </div>
+
+            <!-- Total selecionado (aparece dinamicamente) -->
+            <div id="totalSelecionado">
+                <i class="fa-solid fa-calculator"></i>
+                <p><strong>Total selecionado para devolução: </strong><span id="valorTotal">R$ 0,00</span></p>
+            </div>
+
+            <!-- Resumo financeiro do pedido -->
+            <div class="order-summary-box">
+                <div class="summary-row">
+                    <span>Subtotal dos itens:</span>
+                    <span class="price" th:text="'R$ ' + ${#numbers.formatDecimal(pedido.subtotal, 1, 'COMMA', 2, 'POINT')}"></span>
+                </div>
+                <div th:if="${pedido.descontoPromocional != null and pedido.descontoPromocional.compareTo(0) > 0}"
+                     class="summary-row" style="color: #28a745;">
+                    <span>Desconto:</span>
+                    <span>- R$ <span th:text="${#numbers.formatDecimal(pedido.descontoPromocional, 1, 'COMMA', 2, 'POINT')}"></span></span>
+                </div>
+                <div class="summary-row">
+                    <span>Frete:</span>
+                    <span th:text="'R$ ' + ${#numbers.formatDecimal(pedido.valorFrete, 1, 'COMMA', 2, 'POINT')}"></span>
+                </div>
+                <div class="summary-row total">
+                    <strong>Total do pedido:</strong>
+                    <strong class="price" th:text="'R$ ' + ${#numbers.formatDecimal(pedido.valorTotal, 1, 'COMMA', 2, 'POINT')}"></strong>
+                </div>
+                <small class="summary-note">
+                    * O valor do frete não é reembolsável em caso de devolução por arrependimento.
+                </small>
+            </div>
+        </div>
+
+        <!-- ===== CARD 2: MOTIVO ===== -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fa-solid fa-clipboard-list"></i>
+                <h2>Informe o motivo</h2>
+            </div>
+            <p class="card-subtitle">Selecione o motivo da devolução. Isso nos ajuda a melhorar nossos serviços.</p>
+
+            <div class="form-group">
+                <label for="motivo">
+                    <i class="fa-solid fa-question-circle"></i>
+                    Motivo da devolução <span class="required">*</span>
+                </label>
+                <select name="motivo" id="motivo" class="form-control" required onchange="atualizarTotal()">
+                    <option value="">Selecione um motivo...</option>
+                    <option th:each="m : ${motivos}"
+                            th:value="${m.name()}"
+                            th:text="${m.descricao}">
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="justificativa">
+                    <i class="fa-solid fa-pen"></i>
+                    Justificativa detalhada
+                </label>
+                <textarea name="justificativa"
+                          id="justificativa"
+                          class="form-control"
+                          placeholder="Descreva detalhadamente o problema com o produto... (opcional)"
+                          maxlength="500"></textarea>
+                <small style="color:#aaa; font-size:12px; margin-top:4px; display:block;">
+                    <span id="contadorChars">0</span>/500 caracteres
+                </small>
+            </div>
+        </div>
+
+        <!-- ===== BOTÕES DE AÇÃO ===== -->
+        <div class="btn-group">
+            <a href="/home" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Voltar para Home
+            </a>
+            <button type="button" class="btn btn-primary" id="btnSubmit" disabled onclick="confirmarEnvio()">
+                <i class="fa-solid fa-paper-plane"></i> Enviar Solicitação
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer-grid">
+        <div class="footer-col">
+            <h4>BookNexus</h4>
+            <a href="/sobre">Sobre nós</a>
+            <a href="/contato">Contato</a>
+            <a href="/trabalhe-conosco">Trabalhe conosco</a>
+        </div>
+        <div class="footer-col">
+            <h4>Ajuda</h4>
+            <a href="/faq">Perguntas frequentes</a>
+            <a href="/trocas">Política de trocas</a>
+            <a href="/entrega">Prazos de entrega</a>
+        </div>
+        <div class="footer-col">
+            <h4>Minha conta</h4>
+            <a href="/home">Meus pedidos</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2025 BookNexus. Todos os direitos reservados.</p>
+    </div>
+</footer>
+
+<script>
+    // =============================================
+    //  CSRF
+    // =============================================
+    function getCsrf() {
+        return {
+            token:  document.querySelector('meta[name="_csrf"]')?.getAttribute('content'),
+            header: document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content')
+        };
+    }
+
+    // =============================================
+    //  TOGGLE ITEM (clicar na linha inteira)
+    // =============================================
+    function toggleItem(itemId) {
+        const cb  = document.getElementById('check-' + itemId);
+        const row = document.getElementById('row-' + itemId);
+        if (!cb) return;
+        cb.checked = !cb.checked;
+        row.classList.toggle('selecionado', cb.checked);
+        atualizarTotal();
+    }
+
+    // =============================================
+    //  ATUALIZAR TOTAL E ESTADO DO BOTÃO
+    // =============================================
+    function atualizarTotal() {
+        let total = 0;
+        const checkboxes = document.querySelectorAll('input[name="itensIds"]');
+
+        checkboxes.forEach(cb => {
+            const row = document.getElementById('row-' + cb.value);
+            if (cb.checked) {
+                const preco = parseFloat(cb.getAttribute('data-preco-total')) || 0;
+                total += preco;
+                row?.classList.add('selecionado');
+            } else {
+                row?.classList.remove('selecionado');
+            }
+        });
+
+        const totalDiv   = document.getElementById('totalSelecionado');
+        const valorSpan  = document.getElementById('valorTotal');
+        const btnSubmit  = document.getElementById('btnSubmit');
+        const motivo     = document.getElementById('motivo');
+
+        if (valorSpan) {
+            valorSpan.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+        }
+        if (totalDiv) {
+            totalDiv.style.display = total > 0 ? 'flex' : 'none';
+        }
+
+        const algumSelecionado = total > 0;
+        const motivoSelecionado = motivo && motivo.value;
+        if (btnSubmit) {
+            btnSubmit.disabled = !(algumSelecionado && motivoSelecionado);
+        }
+    }
+
+    // =============================================
+    //  SELECIONAR / DESMARCAR TODOS
+    // =============================================
+    function selecionarTodos() {
+        document.querySelectorAll('input[name="itensIds"]').forEach(cb => { cb.checked = true; });
+        atualizarTotal();
+    }
+
+    function deselecionarTodos() {
+        document.querySelectorAll('input[name="itensIds"]').forEach(cb => { cb.checked = false; });
+        atualizarTotal();
+    }
+
+    // =============================================
+    //  CONTADOR DE CARACTERES
+    // =============================================
+    document.getElementById('justificativa')?.addEventListener('input', function() {
+        const contador = document.getElementById('contadorChars');
+        if (contador) contador.textContent = this.value.length;
+    });
+
+    // =============================================
+    //  CONFIRMAR E ENVIAR (SweetAlert seguro)
+    // =============================================
+    function confirmarEnvio() {
+        const checkboxes = document.querySelectorAll('input[name="itensIds"]:checked');
+        const motivo = document.getElementById('motivo');
+
+        if (checkboxes.length === 0) {
+            Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Selecione pelo menos um item para devolução.' });
+            return;
+        }
+        if (!motivo || !motivo.value) {
+            Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Selecione um motivo para a devolução.' });
+            return;
+        }
+
+        const motivoTexto = motivo.options[motivo.selectedIndex].text;
+        const totalSpan   = document.getElementById('valorTotal');
+        const totalTexto  = totalSpan ? totalSpan.textContent : '';
+
+        Swal.fire({
+            title: 'Confirmar Solicitação',
+            html: `
+                <div style="text-align:left; font-size:14px; line-height:1.8;">
+                    <p><strong>Itens selecionados:</strong> ${checkboxes.length}</p>
+                    <p><strong>Motivo:</strong> ${motivoTexto}</p>
+                    <p><strong>Valor solicitado:</strong> ${totalTexto}</p>
+                    <hr style="margin: 12px 0; border-color:#eee;">
+                    <p style="color:#555;">Após o envio, nossa equipe analisará sua solicitação em até <strong>3 dias úteis</strong>.</p>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa-solid fa-paper-plane"></i> Confirmar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#1e88e5',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const btn = document.getElementById('btnSubmit');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+                }
+                document.getElementById('formDevolucao').submit();
+            }
+        });
+    }
+
+    // =============================================
+    //  INICIALIZAÇÃO
+    // =============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        atualizarTotal();
+
+        document.getElementById('motivo')?.addEventListener('change', function() {
+            atualizarTotal();
+        });
+
+        document.querySelectorAll('input[name="itensIds"]').forEach(cb => {
+            cb.addEventListener('change', atualizarTotal);
+        });
+    });
+</script>
 </body>
 </html>

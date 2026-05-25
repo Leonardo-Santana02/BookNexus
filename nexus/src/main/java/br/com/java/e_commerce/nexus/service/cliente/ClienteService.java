@@ -966,8 +966,7 @@ public class ClienteService {
     }
 
     /**
-     * Remove permanentemente um cliente do banco de dados (exclusão física).
-     * (endereços, telefones, cartões) devido ao cascade definido no modelo.
+     * Remove permanentemente um cliente do banco de dados
      *
      * @param id Identificador do cliente a ser excluído permanentemente
      * @throws ClienteNaoEncontradoException Se o cliente não existir

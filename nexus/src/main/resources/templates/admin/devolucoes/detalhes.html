@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Devoluções - BookNexus</title>
+
+    <!-- CSRF Token -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        /* ===== RESET ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+            display: flex;
+            background: #f4f9fb;
+            color: #333;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 30px 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 22px;
+            padding: 0 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 20px;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: white;
+            padding: 15px 25px;
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.3s;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar a i {
+            font-size: 20px;
+            width: 24px;
+        }
+
+        .sidebar a:hover {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #26a69a;
+        }
+
+        .sidebar a.active {
+            background: rgba(255,255,255,0.15);
+            border-left-color: #26a69a;
+            font-weight: 600;
+        }
+
+        /* ===== CONTENT ===== */
+        .content {
+            margin-left: 260px;
+            padding: 40px;
+            flex: 1;
+            min-height: 100vh;
+            width: calc(100% - 260px);
+        }
+
+        /* ===== MENSAGEM DE BOAS-VINDAS ===== */
+        .welcome-message {
+            background: linear-gradient(135deg, #e3f2fd, #e0f2f1);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid #1e88e5;
+        }
+
+        .welcome-message h2 {
+            color: #1e3c72;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .welcome-message p {
+            margin-bottom: 0;
+            color: #2a5298;
+        }
+
+        /* ===== BOTÕES ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e88e5, #26a69a);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(30,136,229,0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        /* ===== CARD ===== */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .card h3 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+        }
+
+        /* ===== SELECTS E INPUTS ===== */
+        .select-cliente, .filter-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e7ff;
+            border-radius: 30px;
+            font-size: 15px;
+            background: white;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .select-cliente:focus, .filter-select:focus {
+            border-color: #1e88e5;
+            box-shadow: 0 0 0 3px rgba(30,136,229,0.1);
+        }
+
+        /* ===== TABELA ===== */
+        .table-container {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 15px 10px;
+            font-weight: 600;
+            color: #1e3c72;
+            border-bottom: 2px solid #e0e0e0;
+            font-size: 15px;
+        }
+
+        td {
+            padding: 15px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #555;
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* ===== STATUS BADGE ===== */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-AGUARDANDO_DEVOLUCAO { background: #fff3cd; color: #856404; }
+        .badge-DEVOLUCAO_CONFIRMADA { background: #d1ecf1; color: #0c5460; }
+        .badge-REEMBOLSO_SOLICITADO { background: #cce5ff; color: #004085; }
+        .badge-REEMBOLSO_APROVADO { background: #d4edda; color: #155724; }
+        .badge-REEMBOLSO_REJEITADO { background: #f8d7da; color: #721c24; }
+        .badge-REEMBOLSO_PAGO { background: #d4edda; color: #155724; }
+        .badge-EM_ANALISE { background: #fff3cd; color: #856404; }
+        .badge-FINALIZADO { background: #d4edda; color: #155724; }
+
+        /* ===== FILTROS BAR ===== */
+        .filters-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #1e3c72;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .actions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        /* ===== DETALHES DEVOLUÇÃO ===== */
+        .devolucao-detalhes {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .info-label {
+            font-weight: 600;
+            width: 180px;
+            color: #1e3c72;
+        }
+
+        .info-value {
+            flex: 1;
+            color: #555;
+        }
+
+        .divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 20px 0;
+        }
+
+        /* ===== LOADING ===== */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #1e88e5;
+        }
+
+        .loading i {
+            font-size: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== BOTÃO VOLTAR ===== */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #1e88e5, #26a69a);
+            color: white;
+            text-decoration: none;
+            transition: 0.3s;
+            border: none;
+            font-weight: 500;
+        }
+
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(30,136,229,0.3);
+        }
+
+        /* ===== MODAL ESTILO ===== */
+        .modal-content-custom {
+            text-align: left;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                overflow: hidden;
+            }
+            .sidebar h2, .sidebar a span {
+                display: none;
+            }
+            .sidebar a {
+                justify-content: center;
+                padding: 20px 0;
+            }
+            .content {
+                margin-left: 70px;
+                padding: 20px;
+                width: calc(100% - 70px);
+            }
+            .info-label {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>📚 BookNexus</h2>
+
+    <a th:href="@{/admin}" class="sidebar-link">
+        <i class="bi bi-house-door-fill"></i>
+        <span>Início</span>
+    </a>
+
+    <a th:href="@{/admin/clientes}" class="sidebar-link">
+        <i class="bi bi-people-fill"></i>
+        <span>Clientes</span>
+    </a>
+
+    <a th:href="@{/admin/produtos}" class="sidebar-link">
+        <i class="bi bi-box-seam"></i>
+        <span>Estoque</span>
+    </a>
+
+    <a th:href="@{/admin/pedidos}" class="sidebar-link">
+        <i class="bi bi-cart-fill"></i>
+        <span>Pedidos</span>
+    </a>
+
+    <a th:href="@{/admin/dashboard}" class="sidebar-link">
+        <i class="bi bi-speedometer2"></i>
+        <span>Dashboard</span>
+    </a>
+
+    <a th:href="@{/admin/log}" class="sidebar-link">
+        <i class="bi bi-file-text-fill"></i>
+        <span>Relatórios</span>
+    </a>
+
+    <a th:href="@{/admin/devolucoes}" class="sidebar-link active">
+        <i class="bi bi-arrow-repeat"></i>
+        <span>Devoluções</span>
+    </a>
+
+    <a th:href="@{/logout}" style="margin-top: auto;">
+        <i class="bi bi-box-arrow-right"></i>
+        <span>Sair</span>
+    </a>
+</div>
+
+<!-- CONTEÚDO PRINCIPAL -->
+<div class="content">
+
+    <!-- Mensagem de boas-vindas -->
+    <div class="welcome-message">
+        <h2><i class="bi bi-arrow-repeat"></i> Gerenciar Devoluções</h2>
+        <p>Acompanhe e processe solicitações de devolução e reembolso dos clientes.</p>
+    </div>
+
+    <!-- CABEÇALHO DA PÁGINA -->
+    <div class="actions-header">
+        <h1>
+            <i class="bi bi-box-arrow-in-down-left"></i>
+            Solicitações de Devolução
+        </h1>
+
+        <div>
+            <button class="btn btn-primary btn-sm" onclick="carregarDevolucoes()">
+                <i class="bi bi-arrow-repeat"></i> Atualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- CARD DE SELEÇÃO DE CLIENTE -->
+    <div class="card">
+        <h3>
+            <i class="bi bi-person-badge"></i>
+            Filtrar por Cliente
+        </h3>
+        <select class="select-cliente" id="clienteSelect" onchange="carregarDevolucoes()">
+            <option value="">Selecione um cliente</option>
+            <option value="1">João Silva - joao@email.com</option>
+            <option value="2">Maria Santos - maria@email.com</option>
+            <option value="3">Pedro Oliveira - pedro@email.com</option>
+            <option value="4">Ana Costa - ana@email.com</option>
+            <option value="5">Carlos Lima - carlos@email.com</option>
+        </select>
+    </div>
+
+    <!-- FILTROS ADICIONAIS -->
+    <div class="filters-bar">
+        <div class="filter-group">
+            <label><i class="bi bi-funnel"></i> Status da Devolução</label>
+            <select class="filter-select" id="statusFilter" onchange="filtrarTabela()">
+                <option value="">Todos os Status</option>
+                <option value="AGUARDANDO_DEVOLUCAO">Aguardando devolução</option>
+                <option value="EM_ANALISE">Em análise</option>
+                <option value="REEMBOLSO_SOLICITADO">Reembolso solicitado</option>
+                <option value="REEMBOLSO_APROVADO">Reembolso aprovado</option>
+                <option value="REEMBOLSO_REJEITADO">Reembolso rejeitado</option>
+                <option value="REEMBOLSO_PAGO">Reembolso pago</option>
+                <option value="DEVOLUCAO_CONFIRMADA">Devolução confirmada</option>
+                <option value="FINALIZADO">Finalizado</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label><i class="bi bi-calendar"></i> Data Início</label>
+            <input type="date" id="dataInicioFilter" class="filter-select" placeholder="Data inicial">
+        </div>
+
+        <div class="filter-group">
+            <label><i class="bi bi-calendar"></i> Data Fim</label>
+            <input type="date" id="dataFimFilter" class="filter-select" placeholder="Data final">
+        </div>
+
+        <div class="filter-group">
+            <label>&nbsp;</label>
+            <button class="btn btn-primary btn-sm" onclick="filtrarPorData()">
+                <i class="bi bi-funnel"></i> Aplicar Filtros
+            </button>
+        </div>
+    </div>
+
+    <!-- TABELA DE DEVOLUÇÕES -->
+    <div class="table-container">
+        <div id="loadingIndicator" class="loading" style="display: none;">
+            <i class="bi bi-arrow-repeat"></i>
+            <p>Carregando devoluções...</p>
+        </div>
+        <div id="tabelaDevolucoes">
+            <table id="devolucoesTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Pedido</th>
+                    <th>Data Solicitação</th>
+                    <th>Valor</th>
+                    <th>Motivo</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+                </thead>
+                <tbody id="devolucoesTableBody">
+                <!-- Dados estáticos de exemplo -->
+                <tr data-status="AGUARDANDO_DEVOLUCAO">
+                    <td>#101</td>
+                    <td>
+                        <strong>João Silva</strong><br>
+                        <small style="color: #999;">joao@email.com</small>
+                    </td>
+                    <td>#5001</td>
+                    <td>15/05/2026</td>
+                    <td class="price">R$ 89,90</td>
+                    <td>Produto com defeito</td>
+                    <td><span class="badge badge-AGUARDANDO_DEVOLUCAO">Aguardando devolução</span></td>
+                    <td>
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            <button class="btn btn-sm btn-primary" onclick="verDetalhes(101)" title="Ver detalhes">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <select class="status-select" onchange="atualizarStatusDevolucao(this, 101)">
+                                <option value="AGUARDANDO_DEVOLUCAO" selected>Aguardando devolução</option>
+                                <option value="EM_ANALISE">Em análise</option>
+                                <option value="REEMBOLSO_SOLICITADO">Reembolso solicitado</option>
+                                <option value="REEMBOLSO_APROVADO">Reembolso aprovado</option>
+                                <option value="REEMBOLSO_REJEITADO">Reembolso rejeitado</option>
+                                <option value="REEMBOLSO_PAGO">Reembolso pago</option>
+                                <option value="DEVOLUCAO_CONFIRMADA">Devolução confirmada</option>
+                                <option value="FINALIZADO">Finalizado</option>
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+                <tr data-status="EM_ANALISE">
+                    <td>#102</td>
+                    <td>
+                        <strong>Maria Santos</strong><br>
+                        <small style="color: #999;">maria@email.com</small>
+                    </td>
+                    <td>#5002</td>
+                    <td>14/05/2026</td>
+                    <td class="price">R$ 149,90</td>
+                    <td>Produto diferente do anunciado</td>
+                    <td><span class="badge badge-EM_ANALISE">Em análise</span></td>
+                    <td>
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            <button class="btn btn-sm btn-primary" onclick="verDetalhes(102)" title="Ver detalhes">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <select class="status-select" onchange="atualizarStatusDevolucao(this, 102)">
+                                <option value="AGUARDANDO_DEVOLUCAO">Aguardando devolução</option>
+                                <option value="EM_ANALISE" selected>Em análise</option>
+                                <option value="REEMBOLSO_SOLICITADO">Reembolso solicitado</option>
+                                <option value="REEMBOLSO_APROVADO">Reembolso aprovado</option>
+                                <option value="REEMBOLSO_REJEITADO">Reembolso rejeitado</option>
+                                <option value="REEMBOLSO_PAGO">Reembolso pago</option>
+                                <option value="DEVOLUCAO_CONFIRMADA">Devolução confirmada</option>
+                                <option value="FINALIZADO">Finalizado</option>
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+                <tr data-status="REEMBOLSO_SOLICITADO">
+                    <td>#103</td>
+                    <td>
+                        <strong>Pedro Oliveira</strong><br>
+                        <small style="color: #999;">pedro@email.com</small>
+                    </td>
+                    <td>#5003</td>
+                    <td>13/05/2026</td>
+                    <td class="price">R$ 199,90</td>
+                    <td>Arrependimento/Desistência</td>
+                    <td><span class="badge badge-REEMBOLSO_SOLICITADO">Reembolso solicitado</span></td>
+                    <td>
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            <button class="btn btn-sm btn-primary" onclick="verDetalhes(103)" title="Ver detalhes">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <select class="status-select" onchange="atualizarStatusDevolucao(this, 103)">
+                                <option value="AGUARDANDO_DEVOLUCAO">Aguardando devolução</option>
+                                <option value="EM_ANALISE">Em análise</option>
+                                <option value="REEMBOLSO_SOLICITADO" selected>Reembolso solicitado</option>
+                                <option value="REEMBOLSO_APROVADO">Reembolso aprovado</option>
+                                <option value="REEMBOLSO_REJEITADO">Reembolso rejeitado</option>
+                                <option value="REEMBOLSO_PAGO">Reembolso pago</option>
+                                <option value="DEVOLUCAO_CONFIRMADA">Devolução confirmada</option>
+                                <option value="FINALIZADO">Finalizado</option>
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+                <tr data-status="REEMBOLSO_APROVADO">
+                    <td>#104</td>
+                    <td>
+                        <strong>Ana Costa</strong><br>
+                        <small style="color: #999;">ana@email.com</small>
+                    </td>
+                    <td>#5004</td>
+                    <td>10/05/2026</td>
+                    <td class="price">R$ 59,90</td>
+                    <td>Produto danificado no transporte</td>
+                    <td><span class="badge badge-REEMBOLSO_APROVADO">Reembolso aprovado</span></td>
+                    <td>
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            <button class="btn btn-sm btn-primary" onclick="verDetalhes(104)" title="Ver detalhes">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <select class="status-select" onchange="atualizarStatusDevolucao(this, 104)">
+                                <option value="AGUARDANDO_DEVOLUCAO">Aguardando devolução</option>
+                                <option value="EM_ANALISE">Em análise</option>
+                                <option value="REEMBOLSO_SOLICITADO">Reembolso solicitado</option>
+                                <option value="REEMBOLSO_APROVADO" selected>Reembolso aprovado</option>
+                                <option value="REEMBOLSO_REJEITADO">Reembolso rejeitado</option>
+                                <option value="REEMBOLSO_PAGO">Reembolso pago</option>
+                                <option value="DEVOLUCAO_CONFIRMADA">Devolução confirmada</option>
+                                <option value="FINALIZADO">Finalizado</option>
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+                <tr data-status="FINALIZADO">
+                    <td>#105</td>
+                    <td>
+                        <strong>Carlos Lima</strong><br>
+                        <small style="color: #999;">carlos@email.com</small>
+                    </td>
+                    <td>#5005</td>
+                    <td>05/05/2026</td>
+                    <td class="price">R$ 299,90</td>
+                    <td>Produto com defeito</td>
+                    <td><span class="badge badge-FINALIZADO">Finalizado</span></td>
+                    <td>
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            <button class="btn btn-sm btn-primary" onclick="verDetalhes(105)" title="Ver detalhes">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <select class="status-select" onchange="atualizarStatusDevolucao(this, 105)">
+                                <option value="AGUARDANDO_DEVOLUCAO">Aguardando devolução</option>
+                                <option value="EM_ANALISE">Em análise</option>
+                                <option value="REEMBOLSO_SOLICITADO">Reembolso solicitado</option>
+                                <option value="REEMBOLSO_APROVADO">Reembolso aprovado</option>
+                                <option value="REEMBOLSO_REJEITADO">Reembolso rejeitado</option>
+                                <option value="REEMBOLSO_PAGO">Reembolso pago</option>
+                                <option value="DEVOLUCAO_CONFIRMADA">Devolução confirmada</option>
+                                <option value="FINALIZADO" selected>Finalizado</option>
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- BOTÃO VOLTAR -->
+    <div style="text-align: center;">
+        <a th:href="@{/admin}" class="btn-back">
+            <i class="bi bi-arrow-left"></i>
+            Voltar ao Painel
+        </a>
+    </div>
+
+</div>
+
+<script>
+    // Variável para armazenar todas as devoluções
+    let todasDevolucoes = [];
+
+    // Função para obter CSRF token (placeholder para quando for implementado)
+    function getCsrfToken() {
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+        return { token: csrfToken, header: csrfHeader };
+    }
+
+    // Carregar devoluções (simulado - estático)
+    function carregarDevolucoes() {
+        const clienteId = document.getElementById('clienteSelect').value;
+
+        if (!clienteId) {
+            Swal.fire('Aviso', 'Selecione um cliente para visualizar as devoluções', 'info');
+            return;
+        }
+
+        // Simular loading
+        document.getElementById('devolucoesTableBody').innerHTML = `
+            <tr><td colspan="8" style="text-align: center;">
+                <i class="bi bi-arrow-repeat" style="animation: spin 1s linear infinite; display: inline-block;"></i>
+                Carregando devoluções...
+            </td></tr>
+        `;
+
+        setTimeout(() => {
+            Swal.fire('Info', `Carregando devoluções do cliente ${clienteId}... (Simulação)`, 'info');
+            // Manter dados estáticos para demonstração
+        }, 500);
+    }
+
+    // Filtrar tabela por status
+    function filtrarTabela() {
+        const statusFiltro = document.getElementById('statusFilter').value;
+        const rows = document.querySelectorAll('#devolucoesTableBody tr');
+
+        rows.forEach(row => {
+            const statusBadge = row.querySelector('.badge');
+            if (statusBadge) {
+                const statusTexto = statusBadge.textContent;
+                const statusMap = {
+                    'Aguardando devolução': 'AGUARDANDO_DEVOLUCAO',
+                    'Em análise': 'EM_ANALISE',
+                    'Reembolso solicitado': 'REEMBOLSO_SOLICITADO',
+                    'Reembolso aprovado': 'REEMBOLSO_APROVADO',
+                    'Reembolso rejeitado': 'REEMBOLSO_REJEITADO',
+                    'Reembolso pago': 'REEMBOLSO_PAGO',
+                    'Devolução confirmada': 'DEVOLUCAO_CONFIRMADA',
+                    'Finalizado': 'FINALIZADO'
+                };
+                const statusValue = statusMap[statusTexto] || '';
+
+                if (!statusFiltro || statusFiltro === statusValue) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    // Filtrar por data (simulação)
+    function filtrarPorData() {
+        const dataInicio = document.getElementById('dataInicioFilter').value;
+        const dataFim = document.getElementById('dataFimFilter').value;
+
+        Swal.fire('Info', `Filtrando por data: ${dataInicio || 'sem data início'} até ${dataFim || 'sem data fim'} (Simulação)`, 'info');
+    }
+
+    // Atualizar status da devolução
+    function atualizarStatusDevolucao(select, devolucaoId) {
+        const novoStatus = select.value;
+        const statusTexto = select.options[select.selectedIndex].text;
+
+        Swal.fire({
+            title: 'Confirmar alteração',
+            html: `Deseja alterar o status da devolução <strong>#${devolucaoId}</strong> para:<br>
+                   <span style="font-size: 18px; font-weight: bold;">${statusTexto}</span>?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, alterar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Atualizar visualmente o badge
+                const row = select.closest('tr');
+                const badgeSpan = row.querySelector('.badge');
+
+                // Mapear status para texto e classe
+                const statusConfig = {
+                    'AGUARDANDO_DEVOLUCAO': { texto: 'Aguardando devolução', classe: 'badge-AGUARDANDO_DEVOLUCAO' },
+                    'EM_ANALISE': { texto: 'Em análise', classe: 'badge-EM_ANALISE' },
+                    'REEMBOLSO_SOLICITADO': { texto: 'Reembolso solicitado', classe: 'badge-REEMBOLSO_SOLICITADO' },
+                    'REEMBOLSO_APROVADO': { texto: 'Reembolso aprovado', classe: 'badge-REEMBOLSO_APROVADO' },
+                    'REEMBOLSO_REJEITADO': { texto: 'Reembolso rejeitado', classe: 'badge-REEMBOLSO_REJEITADO' },
+                    'REEMBOLSO_PAGO': { texto: 'Reembolso pago', classe: 'badge-REEMBOLSO_PAGO' },
+                    'DEVOLUCAO_CONFIRMADA': { texto: 'Devolução confirmada', classe: 'badge-DEVOLUCAO_CONFIRMADA' },
+                    'FINALIZADO': { texto: 'Finalizado', classe: 'badge-FINALIZADO' }
+                };
+
+                const config = statusConfig[novoStatus];
+                if (config && badgeSpan) {
+                    badgeSpan.textContent = config.texto;
+                    badgeSpan.className = `badge ${config.classe}`;
+                }
+
+                // Atualizar atributo data-status da linha
+                row.setAttribute('data-status', novoStatus);
+
+                Swal.fire('Sucesso!', `Status da devolução #${devolucaoId} alterado para "${statusTexto}"`, 'success');
+            } else {
+                // Restaurar valor original
+                const originalStatus = select.getAttribute('data-status-original');
+                if (originalStatus) select.value = originalStatus;
+            }
+        });
+    }
+
+    // Ver detalhes da devolução
+    function verDetalhes(devolucaoId) {
+        // Dados de exemplo para cada devolução
+        const detalhesMap = {
+            101: {
+                id: 101,
+                pedidoId: 5001,
+                cliente: 'João Silva',
+                email: 'joao@email.com',
+                cpf: '123.456.789-00',
+                dataSolicitacao: '15/05/2026',
+                valorTotal: 89.90,
+                motivo: 'Produto com defeito',
+                descricao: 'O livro veio com páginas rasgadas e a capa amassada.',
+                status: 'AGUARDANDO_DEVOLUCAO',
+                enderecoColeta: 'Rua das Flores, 123 - São Paulo, SP',
+                produtos: [{ nome: 'Dom Casmurro', quantidade: 1, preco: 89.90 }]
+            },
+            102: {
+                id: 102,
+                pedidoId: 5002,
+                cliente: 'Maria Santos',
+                email: 'maria@email.com',
+                cpf: '987.654.321-00',
+                dataSolicitacao: '14/05/2026',
+                valorTotal: 149.90,
+                motivo: 'Produto diferente do anunciado',
+                descricao: 'Recebi um livro de capa mole, mas o anunciado era capa dura.',
+                status: 'EM_ANALISE',
+                enderecoColeta: 'Av. Paulista, 1000 - São Paulo, SP',
+                produtos: [{ nome: 'A Revolução dos Bichos', quantidade: 1, preco: 149.90 }]
+            },
+            103: {
+                id: 103,
+                pedidoId: 5003,
+                cliente: 'Pedro Oliveira',
+                email: 'pedro@email.com',
+                cpf: '456.789.123-00',
+                dataSolicitacao: '13/05/2026',
+                valorTotal: 199.90,
+                motivo: 'Arrependimento/Desistência',
+                descricao: 'Comprei por engano, gostaria de cancelar a compra.',
+                status: 'REEMBOLSO_SOLICITADO',
+                enderecoColeta: 'Rua dos Pinheiros, 500 - São Paulo, SP',
+                produtos: [{ nome: '1984', quantidade: 1, preco: 199.90 }]
+            }
+        };
+
+        const dados = detalhesMap[devolucaoId] || {
+            id: devolucaoId,
+            pedidoId: 5000,
+            cliente: 'Cliente Exemplo',
+            email: 'cliente@email.com',
+            cpf: '000.000.000-00',
+            dataSolicitacao: '01/05/2026',
+            valorTotal: 99.90,
+            motivo: 'Outros',
+            descricao: 'Descrição não disponível.',
+            status: 'EM_ANALISE',
+            enderecoColeta: 'Endereço não informado',
+            produtos: [{ nome: 'Produto Exemplo', quantidade: 1, preco: 99.90 }]
+        };
+
+        let html = `<div class="modal-content-custom">`;
+        html += `<div class="devolucao-detalhes">`;
+        html += `<div class="info-row"><div class="info-label">ID Devolução:</div><div class="info-value">#${dados.id}</div></div>`;
+        html += `<div class="info-row"><div class="info-label">Pedido:</div><div class="info-value">#${dados.pedidoId}</div></div>`;
+        html += `<div class="info-row"><div class="info-label">Cliente:</div><div class="info-value">${dados.cliente} (${dados.email})</div></div>`;
+        html += `<div class="info-row"><div class="info-label">CPF:</div><div class="info-value">${dados.cpf}</div></div>`;
+        html += `<div class="info-row"><div class="info-label">Data Solicitação:</div><div class="info-value">${dados.dataSolicitacao}</div></div>`;
+        html += `<div class="info-row"><div class="info-label">Motivo:</div><div class="info-value">${dados.motivo}</div></div>`;
+        html += `<div class="info-row"><div class="info-label">Descrição:</div><div class="info-value">${dados.descricao}</div></div>`;
+        html += `<div class="info-row"><div class="info-label">Endereço de Coleta:</div><div class="info-value">${dados.enderecoColeta}</div></div>`;
+        html += `<div class="info-row"><div class="info-label">Valor Total:</div><div class="info-value price">R$ ${formatarPreco(dados.valorTotal)}</div></div>`;
+
+        html += `<div class="divider"></div>`;
+        html += `<h4>Produtos da Devolução</h4>`;
+        html += `<table style="width:100%; border-collapse:collapse;">`;
+        html += `<tr style="border-bottom:1px solid #ddd;"><th>Produto</th><th>Qtd</th><th>Preço</th></tr>`;
+
+        dados.produtos.forEach(produto => {
+            html += `<tr style="border-bottom:1px solid #eee;">
+                        <td>${produto.nome}</td>
+                        <td>${produto.quantidade}</td>
+                        <td>R$ ${formatarPreco(produto.preco)}</td>
+                     </tr>`;
+        });
+
+        html += `</table>`;
+        html += `<div class="divider"></div>`;
+
+        const statusConfig = {
+            'AGUARDANDO_DEVOLUCAO': { texto: 'Aguardando devolução', cor: '#856404' },
+            'EM_ANALISE': { texto: 'Em análise', cor: '#856404' },
+            'REEMBOLSO_SOLICITADO': { texto: 'Reembolso solicitado', cor: '#004085' },
+            'REEMBOLSO_APROVADO': { texto: 'Reembolso aprovado', cor: '#155724' },
+            'REEMBOLSO_REJEITADO': { texto: 'Reembolso rejeitado', cor: '#721c24' },
+            'REEMBOLSO_PAGO': { texto: 'Reembolso pago', cor: '#155724' },
+            'DEVOLUCAO_CONFIRMADA': { texto: 'Devolução confirmada', cor: '#0c5460' },
+            'FINALIZADO': { texto: 'Finalizado', cor: '#155724' }
+        };
+
+        const statusInfo = statusConfig[dados.status] || { texto: dados.status, cor: '#333' };
+        html += `<div class="info-row"><div class="info-label">Status Atual:</div><div class="info-value"><span style="color: ${statusInfo.cor}; font-weight: bold;">${statusInfo.texto}</span></div></div>`;
+
+        html += `</div></div>`;
+
+        Swal.fire({
+            title: `Detalhes da Devolução #${dados.id}`,
+            html: html,
+            icon: 'info',
+            width: '750px',
+            confirmButtonText: 'Fechar'
+        });
+    }
+
+    // Formatar preço
+    function formatarPreco(valor) {
+        if (valor === undefined || valor === null) return '0,00';
+        return Number(valor).toFixed(2).replace('.', ',');
+    }
+
+    // Inicialização da página
+    document.addEventListener('DOMContentLoaded', function() {
+        // Salvar valores originais dos selects de status
+        document.querySelectorAll('.status-select').forEach(select => {
+            if (!select.hasAttribute('data-status-original')) {
+                select.setAttribute('data-status-original', select.value);
+            }
+        });
+
+        // Simular carregamento de dados
+        console.log('Página de devoluções carregada (versão estática)');
+    });
+</script>
+
+</body>
+</html>

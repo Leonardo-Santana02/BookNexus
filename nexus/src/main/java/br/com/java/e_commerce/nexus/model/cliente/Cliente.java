@@ -1,6 +1,8 @@
 package br.com.java.e_commerce.nexus.model.cliente;
 
 import br.com.java.e_commerce.nexus.model.enums.Genero;
+import br.com.java.e_commerce.nexus.model.venda.Pedido;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -40,19 +42,27 @@ public class Cliente {
 
     // Relacionamento com Endereços
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Endereco> enderecos = new ArrayList<>();
 
     // Relacionamento com Telefones
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Telefone> telefones = new ArrayList<>();
 
     // Relacionamento com Cartões de Crédito
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<CartaoCredito> cartoesCredito = new ArrayList<>();
+
+    // Relacionamento com Pedidos (ADICIONADO)
+    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Pedido> pedidos = new ArrayList<>();
 
     public Cliente() {}
 
-    // SUGESTÃO - incluir todos os campos obrigatórios
+    // Inclui todos os campos obrigatórios
     public Cliente(String nome, String cpf, String email, String senha, Genero genero, LocalDate dataNascimento) {
         this.nome = nome;
         this.cpf = cpf;
@@ -97,6 +107,9 @@ public class Cliente {
     public List<CartaoCredito> getCartoesCredito() { return cartoesCredito; }
     public void setCartoesCredito(List<CartaoCredito> cartoesCredito) { this.cartoesCredito = cartoesCredito; }
 
+    public List<Pedido> getPedidos() { return pedidos; }
+    public void setPedidos(List<Pedido> pedidos) { this.pedidos = pedidos; }
+
     // Métodos para gerenciar os relacionamentos bidirecionais
     public void addEndereco(Endereco endereco) {
         enderecos.add(endereco);
@@ -126,6 +139,16 @@ public class Cliente {
     public void removeCartaoCredito(CartaoCredito cartao) {
         cartoesCredito.remove(cartao);
         cartao.setCliente(null);
+    }
+
+    public void addPedido(Pedido pedido) {
+        pedidos.add(pedido);
+        pedido.setCliente(this);
+    }
+
+    public void removePedido(Pedido pedido) {
+        pedidos.remove(pedido);
+        pedido.setCliente(null);
     }
 
     // Método para exclusão lógica

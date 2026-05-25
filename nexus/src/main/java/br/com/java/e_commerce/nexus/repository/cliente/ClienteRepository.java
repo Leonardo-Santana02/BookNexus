@@ -18,7 +18,6 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
      * Utilizado para garantir unicidade do CPF no sistema.
      *
      * O Spring Data JPA gera automaticamente a consulta:
-     * SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM Cliente c WHERE c.cpf = :cpf
      *
      * @param cpf CPF a ser verificado (já deve estar sem máscara)
      * @return true se já existe um cliente com este CPF, false caso contrário
@@ -42,7 +41,6 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
      * Busca clientes pelo nome (busca parcial, case-insensitive).
      *
      * Consulta gerada:
-     * SELECT * FROM clientes WHERE nome ILIKE '%:nome%'
      *
      * @param nome Nome ou parte do nome para busca
      * @return Lista de clientes que contêm o texto informado no nome

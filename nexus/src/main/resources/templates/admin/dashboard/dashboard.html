@@ -7,6 +7,9 @@
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
 
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         /* ===== RESET ===== */
         * {
@@ -22,7 +25,7 @@
             color: #333;
         }
 
-        /* ===== SIDEBAR (IDENTICA À HOMEPAGE) ===== */
+        /* ===== SIDEBAR ===== */
         .sidebar {
             width: 260px;
             height: 100vh;
@@ -122,6 +125,69 @@
             color: #2a5298;
         }
 
+        /* ===== FILTROS ===== */
+        .filtros-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+
+        .filtros-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-end;
+        }
+
+        .filtro-group {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .filtro-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filtro-group input, .filtro-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .filtro-group input:focus, .filtro-group select:focus {
+            outline: none;
+            border-color: #1e88e5;
+            box-shadow: 0 0 0 3px rgba(30,136,229,0.1);
+        }
+
+        .btn-filtrar {
+            background: linear-gradient(135deg, #1e88e5, #26a69a);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+            height: 42px;
+        }
+
+        .btn-filtrar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30,136,229,0.3);
+        }
+
         /* ===== GRID DO DASHBOARD ===== */
         .dashboard-grid {
             display: grid;
@@ -169,24 +235,14 @@
             color: #26a69a;
         }
 
-        .card-icon.customers {
+        .card-icon.items {
             background: linear-gradient(135deg, #fff3e0, #ffe0b2);
             color: #ff9800;
         }
 
-        .card-icon.products {
-            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
-            color: #9c27b0;
-        }
-
-        .card-icon.revenue {
+        .card-icon.average {
             background: linear-gradient(135deg, #e0f2f1, #b2dfdb);
             color: #009688;
-        }
-
-        .card-icon.average {
-            background: linear-gradient(135deg, #ffebee, #ffcdd2);
-            color: #f44336;
         }
 
         .card-content {
@@ -209,19 +265,9 @@
             margin-bottom: 5px;
         }
 
-        .metric-trend {
+        .metric-sub {
             font-size: 12px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .trend-up {
-            color: #26a69a;
-        }
-
-        .trend-down {
-            color: #e53935;
+            color: #888;
         }
 
         /* ===== CARD DE GRÁFICO ===== */
@@ -250,290 +296,22 @@
             font-size: 18px;
         }
 
-        .chart-legend {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-        }
-
-        .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 4px;
-        }
-
-        .legend-color.ficcao {
-            background: #1e88e5;
-        }
-
-        .legend-color.nao-ficcao {
-            background: #26a69a;
-        }
-
-        .legend-color.cientifico {
-            background: #9c27b0;
-        }
-
-        .legend-color.infantil {
-            background: #ff9800;
-        }
-
-        /* ===== GRÁFICO DE LINHAS FAKE ===== */
-        .line-chart-container {
-            background: #f8faff;
-            border-radius: 16px;
-            padding: 30px 20px 20px;
-            margin: 20px 0;
-            position: relative;
-        }
-
-        .chart-grid {
-            position: relative;
-            height: 300px;
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-around;
-            border-bottom: 2px solid #ddd;
-            border-left: 2px solid #ddd;
-            margin-left: 40px;
-            padding-bottom: 10px;
-        }
-
-        .chart-grid::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: repeating-linear-gradient(
-                    transparent,
-                    transparent 49px,
-                    rgba(0,0,0,0.05) 50px
-            );
-            pointer-events: none;
-        }
-
-        .chart-column {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            height: 100%;
-            max-width: 80px;
-        }
-
-        .chart-lines {
-            position: relative;
+        canvas {
+            max-height: 400px;
             width: 100%;
-            height: 100%;
         }
 
-        /* Linhas para cada categoria */
-        .line-point {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            transform: translate(-50%, 50%);
-            cursor: pointer;
-            transition: transform 0.2s;
-            z-index: 3;
-        }
-
-        .line-point:hover {
-            transform: translate(-50%, 50%) scale(1.5);
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
-        }
-
-        .line-point.ficcao {
-            background: #1e88e5;
-            border: 2px solid white;
-        }
-
-        .line-point.nao-ficcao {
-            background: #26a69a;
-            border: 2px solid white;
-        }
-
-        .line-point.cientifico {
-            background: #9c27b0;
-            border: 2px solid white;
-        }
-
-        .line-point.infantil {
-            background: #ff9800;
-            border: 2px solid white;
-        }
-
-        /* Linhas conectando os pontos */
-        .line-connection {
-            position: absolute;
-            height: 2px;
-            background: #1e88e5;
-            transform-origin: 0 0;
-            z-index: 2;
-            opacity: 0.6;
-        }
-
-        .line-connection.ficcao {
-            background: #1e88e5;
-        }
-
-        .line-connection.nao-ficcao {
-            background: #26a69a;
-        }
-
-        .line-connection.cientifico {
-            background: #9c27b0;
-        }
-
-        .line-connection.infantil {
-            background: #ff9800;
-        }
-
-        .chart-x-labels {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 10px;
-            margin-left: 40px;
-            padding: 0 10px;
-        }
-
-        .chart-x-label {
-            flex: 1;
+        .sem-dados {
             text-align: center;
-            font-size: 12px;
-            color: #666;
-            font-weight: 500;
-            max-width: 80px;
+            padding: 60px 20px;
+            background: #f8faff;
+            border-radius: 12px;
         }
 
-        .chart-y-labels {
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 0 5px;
-        }
-
-        .chart-y-label {
-            font-size: 10px;
-            color: #999;
-            text-align: right;
-            transform: translateY(50%);
-        }
-
-        .chart-tooltip {
-            position: absolute;
-            background: #1e3c72;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            pointer-events: none;
-            z-index: 10;
-            opacity: 0;
-            transition: opacity 0.2s;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        .chart-tooltip:after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            border-top: 5px solid #1e3c72;
-        }
-
-        /* ===== GRID SECUNDÁRIO ===== */
-        .secondary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .info-card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-        }
-
-        .info-card h3 {
-            color: #1e3c72;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 18px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .top-product-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 12px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .top-product-item:last-child {
-            border-bottom: none;
-        }
-
-        .product-rank {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: #e3f2fd;
-            color: #1e88e5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .product-info {
-            flex: 1;
-        }
-
-        .product-name {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 3px;
-        }
-
-        .product-stats {
-            display: flex;
-            gap: 15px;
-            font-size: 12px;
-            color: #666;
-        }
-
-        .product-sales {
-            color: #1e88e5;
-            font-weight: 600;
+        .sem-dados i {
+            font-size: 64px;
+            color: #ccc;
+            margin-bottom: 15px;
         }
 
         /* ===== BOTÃO VOLTAR ===== */
@@ -555,6 +333,19 @@
         .btn-back:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 15px rgba(30,136,229,0.3);
+        }
+
+        /* ===== LOADING ===== */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #1e88e5;
         }
 
         /* ===== RESPONSIVE ===== */
@@ -579,49 +370,42 @@
                 flex-direction: column;
                 text-align: center;
             }
-            .chart-grid {
-                margin-left: 30px;
+            .filtros-form {
+                flex-direction: column;
+            }
+            .btn-filtrar {
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
 
-<!-- SIDEBAR IDENTICA À HOMEPAGE -->
+<!-- SIDEBAR -->
 <div class="sidebar">
     <h2>📚 BookNexus</h2>
 
-    <a th:href="@{/admin}" class="sidebar-link">
+    <a th:href="@{/admin}">
         <i class="bi bi-house-door-fill"></i>
         <span>Início</span>
     </a>
 
-    <a th:href="@{/admin/clientes}" class="sidebar-link">
-        <i class="bi bi-people-fill"></i>
-        <span>Clientes</span>
-    </a>
-
-    <a th:href="@{/admin/produtos}" class="sidebar-link">
+    <a th:href="@{/admin/produtos}">
         <i class="bi bi-box-seam"></i>
         <span>Estoque</span>
     </a>
 
-    <a th:href="@{/admin/pedidos}" class="sidebar-link">
+    <a th:href="@{/admin/pedidos}">
         <i class="bi bi-cart-fill"></i>
         <span>Pedidos</span>
     </a>
 
-    <a th:href="@{/admin/dashboard}" class="sidebar-link active">
+    <a th:href="@{/admin/dashboard}" class="active">
         <i class="bi bi-speedometer2"></i>
         <span>Dashboard</span>
     </a>
 
-    <a th:href="@{/admin/log}" class="sidebar-link">
-        <i class="bi bi-file-text-fill"></i>
-        <span>Relatórios</span>
-    </a>
-
-    <a th:href="@{/admin}" style="margin-top: auto;">
+    <a th:href="@{/logout}" style="margin-top: auto;">
         <i class="bi bi-box-arrow-right"></i>
         <span>Sair</span>
     </a>
@@ -632,170 +416,347 @@
 
     <!-- Mensagem de boas-vindas -->
     <div class="welcome-message">
-        <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
-        <p>Visão geral do desempenho da sua loja BookNexus.</p>
+        <h2><i class="bi bi-speedometer2"></i> Dashboard BookNexus</h2>
+        <p>Visão completa do desempenho da sua livraria com dados em tempo real.</p>
     </div>
 
-    <h1>
-        <i class="bi bi-graph-up"></i>
-        Dashboard
-    </h1>
-    <p>Acompanhe os principais indicadores da sua loja em tempo real.</p>
+    <!-- FILTROS -->
+    <div class="filtros-card">
+        <form method="get" th:action="@{/admin/dashboard}" class="filtros-form">
+            <div class="filtro-group">
+                <label><i class="bi bi-calendar"></i> Data Inicial</label>
+                <input type="date" name="dataInicio" th:value="${dataInicio}" required>
+            </div>
+            <div class="filtro-group">
+                <label><i class="bi bi-calendar"></i> Data Final</label>
+                <input type="date" name="dataFim" th:value="${dataFim}" required>
+            </div>
+            <div class="filtro-group">
+                <label><i class="bi bi-graph-up"></i> Tipo de Análise</label>
+                <select name="tipo" id="tipoSelect">
+                    <option value="categoria" th:selected="${tipo == 'categoria'}">📊 Valor por Gênero (R$)</option>
+                    <option value="produto" th:selected="${tipo == 'produto'}">📈 Volume por Produto (Unidades)</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-filtrar">
+                <i class="bi bi-funnel"></i> Aplicar Filtros
+            </button>
+        </form>
+    </div>
 
-    <!-- GRÁFICO DE LINHAS - VOLUME DE PRODUTOS POR CATEGORIA (VAZIO) -->
+    <!-- CARDS DE MÉTRICAS -->
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <div class="card-icon sales">
+                <i class="bi bi-currency-dollar"></i>
+            </div>
+            <div class="card-content">
+                <h3>Total de Vendas</h3>
+                <div class="metric" th:text="${totalVendas}">R$ 0,00</div>
+                <div class="metric-sub">No período selecionado</div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-icon average">
+                <i class="bi bi-ticket-perforated"></i>
+            </div>
+            <div class="card-content">
+                <h3>Ticket Médio</h3>
+                <div class="metric" th:text="${ticketMedio}">R$ 0,00</div>
+                <div class="metric-sub">Por pedido</div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-icon orders">
+                <i class="bi bi-cart-check"></i>
+            </div>
+            <div class="card-content">
+                <h3>Total de Pedidos</h3>
+                <div class="metric" th:text="${totalPedidos}">0</div>
+                <div class="metric-sub">Pedidos realizados</div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-icon items">
+                <i class="bi bi-box"></i>
+            </div>
+            <div class="card-content">
+                <h3>Itens Vendidos</h3>
+                <div class="metric" th:text="${totalItensVendidos}">0</div>
+                <div class="metric-sub">Unidades totais</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRÁFICO PRINCIPAL -->
     <div class="chart-card">
         <div class="chart-header">
             <h3>
                 <i class="bi bi-graph-up"></i>
-                Volume de Vendas por Categoria
+                <span th:text="${tituloGrafico}">Vendas ao longo do tempo</span>
             </h3>
-            <div class="chart-legend">
-            <span class="legend-item">
-                <span class="legend-color ficcao"></span>
-                Ficção
-            </span>
-                <span class="legend-item">
-                <span class="legend-color nao-ficcao"></span>
-                Não-Ficção
-            </span>
-                <span class="legend-item">
-                <span class="legend-color cientifico"></span>
-                Científico
-            </span>
-                <span class="legend-item">
-                <span class="legend-color infantil"></span>
-                Infantil
-            </span>
-            </div>
         </div>
 
-        <div class="line-chart-container">
-            <!-- Tooltip que aparece ao passar o mouse (invisível) -->
-            <div class="chart-tooltip" id="chartTooltip" style="opacity: 0;">Carregando dados...</div>
-
-            <!-- Grid do gráfico vazio -->
-            <div class="chart-grid" id="chartGrid">
-                <!-- Rótulos do eixo Y (escala) -->
-                <div class="chart-y-labels">
-                    <span class="chart-y-label">80</span>
-                    <span class="chart-y-label">60</span>
-                    <span class="chart-y-label">40</span>
-                    <span class="chart-y-label">20</span>
-                    <span class="chart-y-label">0</span>
-                </div>
-
-                <!-- Colunas para cada mês - APENAS ESTRUTURA, SEM DADOS -->
-                <!-- Janeiro -->
-                <div class="chart-column" data-month="Jan">
-                    <div class="chart-lines" style="height: 100%;">
-                        <!-- Sem pontos de dados -->
-                    </div>
-                </div>
-
-                <!-- Fevereiro -->
-                <div class="chart-column" data-month="Fev">
-                    <div class="chart-lines" style="height: 100%;">
-                        <!-- Sem pontos de dados -->
-                    </div>
-                </div>
-
-                <!-- Março -->
-                <div class="chart-column" data-month="Mar">
-                    <div class="chart-lines" style="height: 100%;">
-                        <!-- Sem pontos de dados -->
-                    </div>
-                </div>
-
-                <!-- Abril -->
-                <div class="chart-column" data-month="Abr">
-                    <div class="chart-lines" style="height: 100%;">
-                        <!-- Sem pontos de dados -->
-                    </div>
-                </div>
-
-                <!-- Maio -->
-                <div class="chart-column" data-month="Mai">
-                    <div class="chart-lines" style="height: 100%;">
-                        <!-- Sem pontos de dados -->
-                    </div>
-                </div>
-
-                <!-- Junho -->
-                <div class="chart-column" data-month="Jun">
-                    <div class="chart-lines" style="height: 100%;">
-                        <!-- Sem pontos de dados -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Rótulos do eixo X (meses) -->
-            <div class="chart-x-labels">
-                <span class="chart-x-label">JAN</span>
-                <span class="chart-x-label">FEV</span>
-                <span class="chart-x-label">MAR</span>
-                <span class="chart-x-label">ABR</span>
-                <span class="chart-x-label">MAI</span>
-                <span class="chart-x-label">JUN</span>
-            </div>
-
-            <!-- Mensagem de gráfico vazio -->
-            <div style="text-align: center; padding: 40px 20px; background: #f8faff; border-radius: 12px; margin-top: 20px;">
-                <i class="bi bi-bar-chart" style="font-size: 48px; color: #ccc;"></i>
-                <p style="color: #999; margin-top: 10px; font-size: 14px;">
-                    Nenhum dado disponível para o período selecionado.
-                </p>
-                <p style="color: #666; font-size: 13px;">
-                    Os dados serão exibidos assim que houver vendas registradas.
-                </p>
-            </div>
+        <div id="loadingGraph" class="loading" style="display: none;">
+            <i class="bi bi-hourglass-split"></i>
+            <p>Carregando gráfico...</p>
         </div>
 
-        <p style="text-align: center; color: #666; margin-top: 15px; font-size: 13px;">
-            <i class="bi bi-info-circle"></i> Selecione um período para visualizar os dados
-        </p>
+        <div id="noDataDiv" class="sem-dados" style="display: none;">
+            <i class="bi bi-bar-chart"></i>
+            <p style="color: #999; margin-top: 10px;">
+                Nenhum dado disponível para o período selecionado.
+            </p>
+            <p style="color: #666; font-size: 13px;">
+                Tente ampliar o período ou verifique se há vendas registradas.
+            </p>
+        </div>
+
+        <div id="graphContainer" style="display: none;">
+            <canvas id="graficoVendas"></canvas>
+        </div>
     </div>
 
     <!-- BOTÃO VOLTAR -->
     <div style="text-align: center;">
         <a th:href="@{/admin}" class="btn-back">
             <i class="bi bi-arrow-left"></i>
-            Voltar ao Painel
+            Voltar ao Painel Administrativo
         </a>
     </div>
 
 </div>
 
-<!-- SCRIPT PARA INTERATIVIDADE DO GRÁFICO (OPCIONAL) -->
-<script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+    // Aguarda o DOM carregar completamente
     document.addEventListener('DOMContentLoaded', function() {
-        const tooltip = document.getElementById('chartTooltip');
-        const points = document.querySelectorAll('.line-point');
+        console.log('=== INICIANDO DASHBOARD ===');
 
-        points.forEach(point => {
-            point.addEventListener('mouseenter', function(e) {
-                const value = this.getAttribute('data-value');
-                const categoria = this.getAttribute('data-categoria');
-                const mes = this.getAttribute('data-mês');
+        // Função para formatar moeda brasileira
+        const formatBRL = (value) => {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+                minimumFractionDigits: 2
+            }).format(value);
+        };
 
-                tooltip.style.opacity = '1';
-                tooltip.style.left = (e.pageX - tooltip.offsetWidth / 2) + 'px';
-                tooltip.style.top = (e.pageY - tooltip.offsetHeight - 10) + 'px';
-                tooltip.innerHTML = `<strong>${categoria}</strong><br>${mes}: ${value} unidades`;
-            });
+        // Recupera os dados JSON do Thymeleaf
+        let labelsJson = /*[[${labelsJson}]]*/ '[]';
+        let datasetsJson = /*[[${datasetsJson}]]*/ '[]';
+        let tipo = /*[[${tipo}]]*/ 'categoria';
+        let labelY = /*[[${labelY}]]*/ 'Valor (R$)';
+        let temDados = /*[[${temDados}]]*/ false;
 
-            point.addEventListener('mouseleave', function() {
-                tooltip.style.opacity = '0';
-            });
-        });
+        // Parse dos JSON
+        let labels = [];
+        let datasetsRaw = [];
 
-        // Atualizar posição do tooltip durante o movimento do mouse
-        document.addEventListener('mousemove', function(e) {
-            if (tooltip.style.opacity === '1') {
-                tooltip.style.left = (e.pageX - tooltip.offsetWidth / 2) + 'px';
-                tooltip.style.top = (e.pageY - tooltip.offsetHeight - 10) + 'px';
+        try {
+            if (typeof labelsJson === 'string') {
+                labels = JSON.parse(labelsJson);
+            } else {
+                labels = labelsJson;
             }
-        });
+
+            if (typeof datasetsJson === 'string') {
+                datasetsRaw = JSON.parse(datasetsJson);
+            } else {
+                datasetsRaw = datasetsJson;
+            }
+        } catch(e) {
+            console.error('Erro ao fazer parse do JSON:', e);
+            labels = [];
+            datasetsRaw = [];
+        }
+
+        console.log('Labels:', labels);
+        console.log('Datasets Raw:', datasetsRaw);
+        console.log('Tipo:', tipo);
+        console.log('Label Y:', labelY);
+        console.log('Tem dados:', temDados);
+
+        // Elementos DOM
+        const loadingDiv = document.getElementById('loadingGraph');
+        const noDataDiv = document.getElementById('noDataDiv');
+        const graphContainer = document.getElementById('graphContainer');
+
+        // Esconde loading
+        if (loadingDiv) loadingDiv.style.display = 'none';
+
+        // Verifica se temos dados para mostrar
+        const temLabels = labels && labels.length > 0;
+        const temDatasets = datasetsRaw && datasetsRaw.length > 0;
+        const temDadosReais = temLabels && temDatasets;
+
+        if (temDadosReais) {
+            console.log('Processando ' + datasetsRaw.length + ' datasets...');
+
+            // Processa os datasets
+            const cores = ['#1e88e5', '#26a69a', '#ff9800', '#9c27b0', '#f44336', '#4caf50', '#795548', '#607d8b', '#e91e63', '#00bcd4'];
+            const datasets = datasetsRaw.map(function(ds, index) {
+                const cor = cores[index % cores.length];
+
+                // Garante que os dados são números
+                const data = ds.data.map(function(value) {
+                    return typeof value === 'number' ? value : (parseFloat(value) || 0);
+                });
+
+                return {
+                    label: ds.label || 'Série ' + (index + 1),
+                    data: data,
+                    borderColor: cor,
+                    backgroundColor: cor + '20',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: cor,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointStyle: 'circle'
+                };
+            });
+
+            // Verifica se há dados válidos
+            const temDadosValidos = datasets.some(ds => ds.data && ds.data.length > 0 && ds.data.some(v => v > 0));
+
+            if (temDadosValidos) {
+                // Mostra o container do gráfico
+                if (graphContainer) graphContainer.style.display = 'block';
+                if (noDataDiv) noDataDiv.style.display = 'none';
+
+                // Cria o gráfico
+                const canvas = document.getElementById('graficoVendas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        boxWidth: 10,
+                                        font: { size: 12, weight: 'bold' },
+                                        padding: 15
+                                    }
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+                                            let value = context.parsed.y;
+                                            if (tipo === 'categoria') {
+                                                return label + ': ' + formatBRL(value);
+                                            } else {
+                                                return label + ': ' + value + ' unidade' + (value !== 1 ? 's' : '');
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Data',
+                                        font: { weight: 'bold', size: 14 },
+                                        color: '#666'
+                                    },
+                                    ticks: {
+                                        maxRotation: 45,
+                                        minRotation: 45,
+                                        autoSkip: true,
+                                        maxTicksLimit: 10
+                                    },
+                                    grid: {
+                                        display: true,
+                                        color: '#e0e0e0'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: labelY,
+                                        font: { weight: 'bold', size: 14 },
+                                        color: '#666'
+                                    },
+                                    beginAtZero: true,
+                                    grid: {
+                                        display: true,
+                                        color: '#e0e0e0'
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            if (tipo === 'categoria') {
+                                                return formatBRL(value);
+                                            }
+                                            return value;
+                                        }
+                                    }
+                                }
+                            },
+                            elements: {
+                                line: {
+                                    borderJoin: 'round',
+                                    borderCap: 'round'
+                                }
+                            }
+                        }
+                    });
+
+                    console.log('✅ Gráfico criado com sucesso!');
+                } else {
+                    console.error('❌ Canvas não encontrado!');
+                    if (noDataDiv) noDataDiv.style.display = 'block';
+                }
+            } else {
+                console.log('⚠️ Dados existem mas todos são zero');
+                if (noDataDiv) noDataDiv.style.display = 'block';
+                if (graphContainer) graphContainer.style.display = 'none';
+            }
+        } else {
+            console.log('⚠️ Sem dados para exibir o gráfico');
+            console.log('Labels está vazio?', !temLabels);
+            console.log('Datasets está vazio?', !temDatasets);
+            if (noDataDiv) noDataDiv.style.display = 'block';
+            if (graphContainer) graphContainer.style.display = 'none';
+        }
+
+        // Atualização automática ao mudar o tipo via select
+        const tipoSelect = document.getElementById('tipoSelect');
+        if (tipoSelect) {
+            tipoSelect.addEventListener('change', function() {
+                const form = document.querySelector('.filtros-form');
+                if (form) {
+                    form.submit();
+                }
+            });
+        }
     });
+
+    /*]]>*/
 </script>
 
 </body>
