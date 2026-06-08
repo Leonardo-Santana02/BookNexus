@@ -35,6 +35,10 @@ import java.util.stream.Collectors;
  * Principais responsabilidades:
  * - Criar pedidos a partir do carrinho de compras
  * - Gerenciar o ciclo de vida do pedido (pagamento, envio, entrega, cancelamento)
+<<<<<<< HEAD
+=======
+ * - Processar devoluções e gerar cupons de troca
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
  * - Fornecer consultas e relatórios de vendas
  *
  */
@@ -49,7 +53,10 @@ public class PedidoService {
     private final EnderecoRepository enderecoRepository;   // Validar endereço de entrega
     private final PagamentoRepository pagamentoRepository; // Persistir pagamentos
     private final CupomRepository cupomRepository;         // Gerenciar cupons usados
+<<<<<<< HEAD
     private final DevolucaoService devolucaoService;       // Serviço de devoluções (ADICIONADO)
+=======
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
 
     /**
      * Construtor para injeção de dependências.
@@ -61,7 +68,10 @@ public class PedidoService {
      * @param enderecoRepository Repositório de endereços
      * @param pagamentoRepository Repositório de pagamentos
      * @param cupomRepository Repositório de cupons
+<<<<<<< HEAD
      * @param devolucaoService Serviço de devoluções (ADICIONADO)
+=======
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
      */
     public PedidoService(PedidoRepository pedidoRepository,
                          CarrinhoService carrinhoService,
@@ -259,12 +269,22 @@ public class PedidoService {
     /**
      * Processa o pagamento de um pedido.
      *
+<<<<<<< HEAD
      * ⭐ ALTERADO EDUCACIONAL: Este método NÃO ALTERA mais o status do pedido para PAGO.
      * O pedido permanece como EM_ABERTO (Aguardando Pagamento).
      *
      * @param pedidoId ID do pedido a ser pago
      * @param pagamento Objeto Pagamento com os dados da transação
      * @return Pedido atualizado (status permanece EM_ABERTO)
+=======
+     * NOTA: Este método parece ser uma versão simplificada do fluxo de pagamento.
+     * Em um sistema real, o pagamento seria processado pelo PagamentoService,
+     * que lida com múltiplos cartões, cupons de troca, etc.
+     *
+     * @param pedidoId ID do pedido a ser pago
+     * @param pagamento Objeto Pagamento com os dados da transação
+     * @return Pedido atualizado com status PAGO
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
      * @throws RuntimeException Se pedido não encontrado ou não estiver em aberto
      */
     @Transactional
@@ -286,12 +306,18 @@ public class PedidoService {
         // Persiste o pagamento
         pagamentoRepository.save(pagamento);
 
+<<<<<<< HEAD
         // Associa o pagamento ao pedido
         pedido.setPagamento(pagamento);
 
         // ⭐ ALTERAÇÃO EDUCACIONAL: NÃO chama pedido.confirmarPagamento()
         // O pedido permanece como EM_ABERTO
         // pedido.confirmarPagamento(); // COMENTADO - Mantém status EM_ABERTO
+=======
+        // Atualiza o pedido com a referência do pagamento e confirma
+        pedido.setPagamento(pagamento);
+        pedido.confirmarPagamento(); // Muda status para PAGO
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
 
         return pedidoRepository.save(pedido);
     }
@@ -426,6 +452,7 @@ public class PedidoService {
     // ===== DEVOLUÇÃO =====
 
     /**
+<<<<<<< HEAD
      * @deprecated Use DevolucaoService.concluirDevolucaoComCupom() em vez deste método.
      * Este método está depreciado e será removido em versões futuras.
      *
@@ -440,6 +467,62 @@ public class PedidoService {
                 "Este método foi movido para DevolucaoService. " +
                         "Por favor, utilize devolucaoService.concluirDevolucaoComCupom(solicitacaoId)"
         );
+=======
+     * Confirma a devolução de um pedido e gera um cupom de troca.
+     *
+     * Este método é chamado quando o cliente devolveu os produtos
+     * e a loja já recebeu e confirmou a devolução.
+     *
+     * Fluxo:
+     * 1. Verifica se o pedido está aguardando devolução
+     * 2. Muda status para DEVOLUCAO_CONFIRMADA
+     * 3. Estorna o estoque (produtos voltam a ficar disponíveis)
+     * 4. Cria um cupom de troca com o valor total do pedido
+     *
+     * @param pedidoId ID do pedido devolvido
+     * @return Cupom de troca gerado para o cliente
+     * @throws RuntimeException Se pedido não encontrado, sem itens, ou não aguardando devolução
+     */
+    @Transactional
+    public Cupom confirmarDevolucaoEGerarCupom(Long pedidoId) {
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new RuntimeException("Pedido não encontrado"));
+
+        // Verifica se o pedido é válido
+        if (!pedido.temItens()) {
+            throw new RuntimeException("Pedido inválido (sem itens) não pode ser devolvido");
+        }
+
+        // Verifica se o pedido está no estado correto para devolução
+        // Este status provavelmente é definido por um processo anterior (solicitação de devolução)
+        if (pedido.getStatus() != StatusPedido.AGUARDANDO_DEVOLUCAO) {
+            throw new RuntimeException("O pedido não está aguardando devolução");
+        }
+
+        // Confirma a devolução
+        pedido.setStatus(StatusPedido.DEVOLUCAO_CONFIRMADA);
+        pedidoRepository.save(pedido);
+
+        // ===== ESTORNA ESTOQUE =====
+        // Os produtos devolvidos voltam para o estoque
+        for (ItemPedido item : pedido.getItens()) {
+            item.getProduto().reporEstoque(item.getQuantidade());
+        }
+
+        // ===== CRIA CUPOM DE TROCA =====
+        // O cliente recebe um crédito no valor total do pedido
+        Cupom cupom = new Cupom();
+        cupom.setCodigo("TROCA-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        cupom.setTipo(TipoCupom.TROCA);
+        cupom.setValor(pedido.getValorTotal());
+        cupom.setCliente(pedido.getCliente());
+        cupom.setDescricao("Cupom de troca referente ao pedido #" + pedido.getId());
+        cupom.setDataValidade(LocalDateTime.now().plusMonths(6)); // Válido por 6 meses
+        cupom.setAtivo(true);
+        cupom.setMaximoUsos(1); // Uso único
+
+        return cupomRepository.save(cupom);
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
     }
 
     // ===== CONSULTAS =====
@@ -484,6 +567,7 @@ public class PedidoService {
     /**
      * Lista todos os pedidos de um cliente específico.
      * Utiliza uma query customizada que carrega os itens junto (evita N+1 queries).
+<<<<<<< HEAD
      * Também atualiza o status do pedido com base na solicitação de devolução ativa.
      *
      * @param clienteId ID do cliente
@@ -535,6 +619,15 @@ public class PedidoService {
         }
 
         return pedidos;
+=======
+     *
+     * @param clienteId ID do cliente
+     * @return Lista de pedidos do cliente
+     */
+    @Transactional(readOnly = true)
+    public List<Pedido> listarPorCliente(Long clienteId) {
+        return pedidoRepository.findByClienteIdWithItens(clienteId);
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
     }
 
     /**

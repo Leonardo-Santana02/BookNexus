@@ -302,17 +302,26 @@
             font-weight: 600;
             display: inline-block;
             text-align: center;
+<<<<<<< HEAD
             min-width: 140px;
         }
         .status-EM_ABERTO { background: #fff3cd; color: #856404; }
         .status-AGUARDANDO_PAGAMENTO { background: #cce5ff; color: #004085; }
+=======
+            min-width: 120px;
+        }
+        .status-EM_ABERTO { background: #fff3cd; color: #856404; }
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
         .status-PAGO { background: #d4edda; color: #155724; }
         .status-ENVIADO { background: #cce5ff; color: #004085; }
         .status-ENTREGUE { background: #d4edda; color: #155724; }
         .status-CANCELADO { background: #f8d7da; color: #721c24; }
         .status-AGUARDANDO_DEVOLUCAO { background: #fff3cd; color: #856404; }
+<<<<<<< HEAD
         .status-DEVOLUCAO_CONFIRMADA { background: #d4edda; color: #155724; }
         .status-DEVOLVIDO { background: #e2e3e5; color: #383d41; }
+=======
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
         .price {
             font-weight: 600;
             color: #26a69a;
@@ -335,18 +344,30 @@
             border: none;
             cursor: pointer;
         }
+<<<<<<< HEAD
         .btn-exchange { background: #fff3cd; color: #856404; }
         .btn-exchange:hover { background: #856404; color: white; }
+=======
+        .btn-track { background: #e3f2fd; color: #1e88e5; }
+        .btn-track:hover { background: #1e88e5; color: white; }
+        .btn-exchange { background: #fff3cd; color: #856404; }
+        .btn-exchange:hover { background: #856404; color: white; }
+        .btn-review { background: #e8f5e9; color: #2e7d32; }
+        .btn-review:hover { background: #2e7d32; color: white; }
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
         .btn-details { background: #f8f9fa; color: #555; border: 1px solid #ddd; }
         .btn-details:hover { background: #e0e0e0; }
         .btn-pay { background: #1e88e5; color: white; }
         .btn-pay:hover { background: #1565c0; }
+<<<<<<< HEAD
         .btn-waiting { background: #6c757d; color: white; cursor: not-allowed; opacity: 0.7; }
         .btn-waiting:hover { background: #6c757d; transform: none; }
         .btn-troca { background: #e3f2fd; color: #1e88e5; }
         .btn-troca:hover { background: #1e88e5; color: white; }
         .btn-troca-disabled { background: #e9ecef; color: #6c757d; cursor: not-allowed; opacity: 0.7; }
         .btn-troca-disabled:hover { background: #e9ecef; transform: none; }
+=======
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
         .pagination {
             display: flex;
             justify-content: center;
@@ -544,7 +565,10 @@
             }
             .product-info { flex-direction: column; text-align: center; }
             .action-buttons { justify-content: flex-end; }
+<<<<<<< HEAD
             .order-summary { flex-direction: column; text-align: center; }
+=======
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
         }
     </style>
 </head>
@@ -600,14 +624,20 @@
             <select id="statusFilter" class="filter-select" onchange="filtrarPedidos()">
                 <option value="todos">Todos os pedidos</option>
                 <option value="EM_ABERTO">Aguardando pagamento</option>
+<<<<<<< HEAD
                 <option value="AGUARDANDO_PAGAMENTO">Aguardando confirmação</option>
+=======
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
                 <option value="PAGO">Pagamento confirmado</option>
                 <option value="ENVIADO">Enviado</option>
                 <option value="ENTREGUE">Entregues</option>
                 <option value="CANCELADO">Cancelados</option>
                 <option value="AGUARDANDO_DEVOLUCAO">Aguardando devolução</option>
+<<<<<<< HEAD
                 <option value="DEVOLUCAO_CONFIRMADA">Devolução confirmada</option>
                 <option value="DEVOLVIDO">Devolvido</option>
+=======
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
             </select>
             <select id="anoFilter" class="filter-select" onchange="filtrarPedidos()">
                 <option value="0">Todos os períodos</option>
@@ -626,6 +656,7 @@
         <h2>Você ainda não tem pedidos</h2>
         <p>Que tal explorar nosso catálogo e fazer sua primeira compra?</p>
         <a href="/home" class="btn btn-primary"><i class="fa-solid fa-book-open"></i> Explorar Livros</a>
+<<<<<<< HEAD
     </div>
 
     <!-- Lista de pedidos -->
@@ -732,6 +763,63 @@
     <div class="action-bar">
         <a href="/home" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Voltar para Loja</a>
     </div>
+=======
+    </div>
+
+    <!-- Lista de pedidos -->
+    <div th:unless="${semPedidos}" class="orders-container">
+        <table class="orders-table">
+            <thead>
+            <tr><th>Pedido</th><th>Qtd</th><th>Total</th><th>Status</th><th>Ações</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="pedido : ${pedidos}" th:data-pedido-id="${pedido.id}" th:data-status="${pedido.status.name()}">
+                <td data-label="Pedido">
+                    <div class="product-info">
+                        <div class="product-image"><i class="fa-solid fa-book"></i></div>
+                        <div class="product-details">
+                            <div class="order-id">Pedido #<span th:text="${pedido.id}"></span></div>
+                            <div class="order-date"><i class="fa-regular fa-calendar-alt"></i> <span th:text="${#temporals.format(pedido.dataCriacao, 'dd/MM/yyyy')}"></span></div>
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Qtd" th:text="${pedido.quantidadeTotalItens} + ' unidade(s)'"></td>
+                <td data-label="Total" class="price" th:text="'R$ ' + ${#numbers.formatDecimal(pedido.valorTotal, 1, 2, 'POINT')}"></td>
+                <td data-label="Status">
+                    <span class="status-badge" th:classappend="'status-' + ${pedido.status.name()}" th:text="${pedido.status.descricao}"></span>
+                </td>
+                <td data-label="Ações">
+                    <div class="action-buttons">
+                        <a th:if="${pedido.status.name() == 'ENVIADO' or pedido.status.name() == 'ENTREGUE'}"
+                           class="btn-action btn-track" title="Rastrear pedido" th:onclick="'rastrearPedido(' + ${pedido.id} + ')'"><i class="fa-solid fa-truck"></i></a>
+                        <a th:if="${pedido.status.name() == 'ENTREGUE'}"
+                           class="btn-action btn-exchange" title="Solicitar troca" th:onclick="'solicitarTroca(' + ${pedido.id} + ')'"><i class="fa-solid fa-rotate-left"></i></a>
+                        <a th:if="${pedido.status.name() == 'ENTREGUE'}"
+                           class="btn-action btn-review" title="Avaliar produto" th:onclick="'avaliarProduto(' + ${pedido.id} + ')'"><i class="fa-regular fa-star"></i></a>
+                        <a th:if="${pedido.status.name() == 'EM_ABERTO'}"
+                           class="btn-action btn-pay" title="Pagar agora" th:onclick="'pagarAgora(' + ${pedido.id} + ')'"><i class="fa-solid fa-credit-card"></i> Pagar</a>
+                        <a th:if="${pedido.status.name() == 'EM_ABERTO'}"
+                           class="btn-action btn-exchange" title="Cancelar pedido" th:onclick="'cancelarPedido(' + ${pedido.id} + ')'"><i class="fa-solid fa-ban"></i></a>
+                        <a class="btn-action btn-details" title="Ver detalhes" th:onclick="'verDetalhes(' + ${pedido.id} + ')'"><i class="fa-solid fa-eye"></i> Detalhes</a>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- Resumo -->
+        <div class="order-summary">
+            <span><i class="fa-regular fa-clock"></i> Última atualização: <span id="dataAtualizacao"></span></span>
+            <span><i class="fa-solid fa-box"></i> Total de pedidos: <strong th:text="${totalPedidos}">0</strong></span>
+            <span><i class="fa-solid fa-truck"></i> Pedidos em andamento: <strong th:text="${pedidosEmAndamento}">0</strong></span>
+            <span><i class="fa-solid fa-money-bill-wave"></i> Valor total gasto: <strong th:text="'R$ ' + ${#numbers.formatDecimal(valorTotalGasto, 1, 2, 'POINT')}">R$ 0,00</strong></span>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <a href="/home" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Voltar para Loja</a>
+    </div>
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
 </div>
 
 <!-- FOOTER -->
@@ -767,13 +855,17 @@
         let visibleCount = 0;
         rows.forEach(row => {
             const status = row.getAttribute('data-status') || '';
+<<<<<<< HEAD
             const pagamentoAprovado = row.getAttribute('data-pagamento-aprovado') === 'true';
+=======
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
             const dataCriacao = row.querySelector('.order-date span')?.textContent || '';
             const dataParts = dataCriacao.split('/');
             const ano = dataParts.length === 3 ? parseInt(dataParts[2]) : 0;
             const pedidoId = row.getAttribute('data-pedido-id');
 
             let show = true;
+<<<<<<< HEAD
 
             // Lógica de filtro considerando pagamento aprovado
             if (statusFilter !== 'todos') {
@@ -785,6 +877,9 @@
                 }
             }
 
+=======
+            if (statusFilter !== 'todos' && status !== statusFilter) show = false;
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
             if (anoFilter > 0 && ano !== anoFilter) show = false;
             if (searchTerm && pedidoId && !pedidoId.includes(searchTerm)) show = false;
 
@@ -795,9 +890,13 @@
         if (totalPedidosSpan) totalPedidosSpan.textContent = visibleCount;
     }
 
+<<<<<<< HEAD
     function pagarAgora(pedidoId) {
         window.location.href = `/pagamentos/pedido/${pedidoId}`;
     }
+=======
+    function pagarAgora(pedidoId) { window.location.href = `/pagamentos/pedido/${pedidoId}`; }
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
 
     function cancelarPedido(pedidoId) {
         Swal.fire({
@@ -824,7 +923,11 @@
         });
     }
 
+<<<<<<< HEAD
     // Função de detalhes com SweetAlert2 + chamada API
+=======
+    // Função melhorada de detalhes com SweetAlert2 + chamada API
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
     function verDetalhes(pedidoId) {
         Swal.fire({
             title: 'Carregando...',
@@ -841,6 +944,7 @@
             .then(data => {
                 let html = `<div style="text-align: left; max-height: 500px; overflow-y: auto;">`;
                 html += `<p><strong>Data:</strong> ${data.dataCriacao}</p>`;
+<<<<<<< HEAD
 
                 // Ajusta o status exibido no popup se necessário
                 let statusTexto = data.status;
@@ -857,18 +961,29 @@
                 }
 
                 html += `<p><strong>Status:</strong> ${statusTexto}</p>`;
+=======
+                html += `<p><strong>Status:</strong> ${data.status}</p>`;
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
                 html += `<p><strong>Endereço de entrega:</strong><br>${data.enderecoEntrega}</p>`;
 
                 // Itens
                 html += `<hr><h4>Itens do pedido</h4><table style="width:100%; border-collapse:collapse;">`;
+<<<<<<< HEAD
                 html += `<tr style="border-bottom:1px solid #ddd;"><th>Produto</th><th>Qtd</th><th>Preço unit.</th><th>Subtotal</th></td>`;
+=======
+                html += `<tr style="border-bottom:1px solid #ddd;"><th>Produto</th><th>Qtd</th><th>Preço unit.</th><th>Subtotal</th></tr>`;
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
                 data.itens.forEach(item => {
                     html += `<tr style="border-bottom:1px solid #eee;">
                         <td>${item.produtoTitulo}<br><small>${item.produtoAutor}</small></td>
                         <td>${item.quantidade}</td>
                         <td>R$ ${item.precoUnitario.toFixed(2).replace('.',',')}</td>
                         <td>R$ ${item.subtotalItem.toFixed(2).replace('.',',')}</td>
+<<<<<<< HEAD
                     </table>`;
+=======
+                    </tr>`;
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
                 });
                 html += `</table>`;
 
@@ -906,6 +1021,7 @@
             });
     }
 
+<<<<<<< HEAD
     function buscarPedido() {
         filtrarPedidos();
     }
@@ -913,15 +1029,53 @@
     // =============================================
     //  NÃO RECARREGA AUTOMATICAMENTE - O CLIENTE PRECISA ATUALIZAR MANUALMENTE
     // =============================================
+=======
+    function rastrearPedido(pedidoId) {
+        Swal.fire('Rastrear Pedido', 'Função de rastreamento em desenvolvimento.', 'info');
+    }
+
+    function solicitarTroca(pedidoId) {
+        Swal.fire({
+            title: 'Solicitar Troca',
+            text: 'Deseja solicitar troca deste pedido?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, solicitar',
+            cancelButtonText: 'Não'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const csrf = getCsrfToken();
+                const headers = {};
+                if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
+                fetch(`/pedidos/${pedidoId}/solicitar-devolucao`, { method: 'POST', headers })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Erro ao solicitar troca');
+                        return response.text();
+                    })
+                    .then(() => Swal.fire('Solicitado!', 'Solicitação de troca enviada com sucesso.', 'success').then(() => location.reload()))
+                    .catch(error => Swal.fire('Erro!', 'Erro ao solicitar troca: ' + error.message, 'error'));
+            }
+        });
+    }
+
+    function avaliarProduto(pedidoId) {
+        Swal.fire('Avaliar Produto', 'Função de avaliação em desenvolvimento.', 'info');
+    }
+
+    function buscarPedido() { filtrarPedidos(); }
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
 
     document.addEventListener('DOMContentLoaded', function() {
         atualizarData();
         setInterval(atualizarData, 60000);
         const searchInput = document.getElementById('searchPedido');
         if (searchInput) searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') buscarPedido(); });
+<<<<<<< HEAD
         filtrarPedidos();
 
         // NÃO recarrega a página automaticamente
+=======
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
     });
 </script>
 </body>

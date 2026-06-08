@@ -444,9 +444,15 @@ public class PagamentoService {
         System.out.println("Pagamento salvo com ID: " + pagamento.getId());
         System.out.println("Cartões vinculados: " + pagamento.getCartoesUsados().size());
 
+<<<<<<< HEAD
         // Atualiza o pedido com a referência do pagamento
         pedido.setPagamento(pagamento);
         pedido.setStatus(StatusPedido.EM_ABERTO);  // Mantém aguardando confirmação do pagamento
+=======
+        // Atualiza o pedido com a referência do pagamento e muda o status
+        pedido.setPagamento(pagamento);
+        pedido.setStatus(StatusPedido.EM_ABERTO);  // Aguardando confirmação do pagamento
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
         pedidoRepository.save(pedido);
 
         return pagamento;
@@ -456,6 +462,7 @@ public class PagamentoService {
      * Confirma o pagamento após a aprovação da transação financeira.
      * Este método é chamado quando o gateway de pagamento retorna sucesso.
      *
+<<<<<<< HEAD
      * ⭐ ALTERADO EDUCACIONAL: O pedido permanece EM_ABERTO mesmo após confirmação do pagamento.
      * O status do pedido NÃO é alterado para PAGO automaticamente.
      *
@@ -463,6 +470,13 @@ public class PagamentoService {
      * 1. Aprova o pagamento (muda status do pagamento para APROVADO)
      * 2. Gera cupom de troco se houver valor excedente
      * 3. Remove/desativa os cupons utilizados
+=======
+     * Ações realizadas:
+     * 1. Aprova o pagamento (muda status para APROVADO)
+     * 2. Confirma o pedido (muda status para PAGO)
+     * 3. Gera cupom de troco se houver valor excedente
+     * 4. Remove/desativa os cupons utilizados
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
      *
      * @param pagamentoId ID do pagamento a ser confirmado
      * @return Pagamento atualizado com status APROVADO
@@ -474,18 +488,31 @@ public class PagamentoService {
                 .orElseThrow(() -> new RuntimeException("Pagamento não encontrado: " + pagamentoId));
 
         // Chama o método da entidade que aprova o pagamento
+<<<<<<< HEAD
         // Internamente muda o status do pagamento para APROVADO e registra a data
         pagamento.aprovar();
 
         // ⭐ ALTERAÇÃO CRÍTICA: NÃO altera o status do pedido para PAGO
         // O pedido permanece EM_ABERTO (Aguardando Pagamento)
+=======
+        // Internamente muda o status para APROVADO e registra a data
+        pagamento.aprovar();
+
+        // Atualiza o pedido: muda status para PAGO
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
         Pedido pedido = pagamento.getPedido();
         // pedido.confirmarPagamento(); // COMENTADO - NÃO altera status do pedido
         // pedidoRepository.save(pedido); // NÃO precisa salvar, status não mudou
 
+<<<<<<< HEAD
         // ===== CÁLCULO DE TROCO CORRIGIDO =====
         // Total efetivamente pago = valor pago com cartões + desconto dos cupons
         BigDecimal totalPago = pagamento.getValor().add(pagamento.getDesconto());
+=======
+        // ===== CÁLCULO DE TROCO =====
+        // Se o valor dos cupons de troca excedeu o valor do pedido,
+        // o excedente deve ser devolvido como novo cupom de troca
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
         BigDecimal valorPedido = pedido.getValorTotal();
         BigDecimal troco = totalPago.subtract(valorPedido);
 

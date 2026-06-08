@@ -17,6 +17,12 @@ import java.util.List;
  * Esta interface estende JpaRepository, fornecendo métodos CRUD básicos
  * e permitindo a definição de consultas personalizadas.
  *
+<<<<<<< HEAD
+=======
+ * @Repository: Anotação opcional para repositórios Spring Data JPA
+ * (Spring já detecta automaticamente interfaces que extendem JpaRepository)
+ *
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
  * @see JpaRepository
  * @see Pedido
  */

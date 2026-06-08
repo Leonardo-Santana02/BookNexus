@@ -380,9 +380,12 @@ public class PagamentoController {
     /**
      * Confirma um pagamento via API REST.
      *
+<<<<<<< HEAD
      * ⭐ ALTERADO: Não altera o status do pedido para PAGO.
      * O pedido permanece como EM_ABERTO.
      *
+=======
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
      * @param id ID do pagamento a ser confirmado
      * @return ResponseEntity com resultado da confirmação
      */

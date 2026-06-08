@@ -24,7 +24,10 @@ public class Pedido {
     private Cliente cliente;
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
+<<<<<<< HEAD
     @JsonIgnore  // IGNORA a serialização dos itens na listagem principal
+=======
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
     private List<ItemPedido> itens = new ArrayList<>();
 
     @ManyToOne
@@ -130,10 +133,15 @@ public class Pedido {
     // ===== GETTERS E SETTERS =====
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+<<<<<<< HEAD
 
     public Cliente getCliente() { return cliente; }
     public void setCliente(Cliente cliente) { this.cliente = cliente; }
 
+=======
+    public Cliente getCliente() { return cliente; }
+    public void setCliente(Cliente cliente) { this.cliente = cliente; }
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
     public List<ItemPedido> getItens() { return itens; }
     public void setItens(List<ItemPedido> itens) {
         if (itens == null) throw new IllegalArgumentException("Lista de itens não pode ser null");
@@ -141,6 +149,7 @@ public class Pedido {
         this.subtotal = calcularSubtotal();
         this.valorTotal = calcularTotal();
     }
+<<<<<<< HEAD
 
     public Endereco getEnderecoEntrega() { return enderecoEntrega; }
     public void setEnderecoEntrega(Endereco enderecoEntrega) { this.enderecoEntrega = enderecoEntrega; }
@@ -163,17 +172,37 @@ public class Pedido {
     public BigDecimal getSubtotal() { return subtotal; }
     public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
 
+=======
+    public Endereco getEnderecoEntrega() { return enderecoEntrega; }
+    public void setEnderecoEntrega(Endereco enderecoEntrega) { this.enderecoEntrega = enderecoEntrega; }
+    public StatusPedido getStatus() { return status; }
+    public void setStatus(StatusPedido status) { this.status = status; }
+    public LocalDateTime getDataCriacao() { return dataCriacao; }
+    public void setDataCriacao(LocalDateTime dataCriacao) { this.dataCriacao = dataCriacao; }
+    public LocalDateTime getDataConfirmacao() { return dataConfirmacao; }
+    public void setDataConfirmacao(LocalDateTime dataConfirmacao) { this.dataConfirmacao = dataConfirmacao; }
+    public LocalDateTime getDataEnvio() { return dataEnvio; }
+    public void setDataEnvio(LocalDateTime dataEnvio) { this.dataEnvio = dataEnvio; }
+    public LocalDateTime getDataEntrega() { return dataEntrega; }
+    public void setDataEntrega(LocalDateTime dataEntrega) { this.dataEntrega = dataEntrega; }
+    public BigDecimal getSubtotal() { return subtotal; }
+    public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
     public BigDecimal getDescontoPromocional() { return descontoPromocional; }
     public void setDescontoPromocional(BigDecimal descontoPromocional) {
         this.descontoPromocional = descontoPromocional;
         this.valorTotal = calcularTotal();
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
     public BigDecimal getValorFrete() { return valorFrete; }
     public void setValorFrete(BigDecimal valorFrete) {
         this.valorFrete = valorFrete;
         this.valorTotal = calcularTotal();
     }
+<<<<<<< HEAD
 
     public BigDecimal getValorTotal() { return valorTotal; }
     public void setValorTotal(BigDecimal valorTotal) { this.valorTotal = valorTotal; }
@@ -198,4 +227,14 @@ public class Pedido {
     public void setTemSolicitacaoPendente(Boolean temSolicitacaoPendente) {
         this.temSolicitacaoPendente = temSolicitacaoPendente;
     }
+=======
+    public BigDecimal getValorTotal() { return valorTotal; }
+    public void setValorTotal(BigDecimal valorTotal) { this.valorTotal = valorTotal; }
+    public String getResumoCuponsPromocionais() { return resumoCuponsPromocionais; }
+    public void setResumoCuponsPromocionais(String resumoCuponsPromocionais) { this.resumoCuponsPromocionais = resumoCuponsPromocionais; }
+    public Pagamento getPagamento() { return pagamento; }
+    public void setPagamento(Pagamento pagamento) { this.pagamento = pagamento; }
+    public String getCodigoRastreio() { return codigoRastreio; }
+    public void setCodigoRastreio(String codigoRastreio) { this.codigoRastreio = codigoRastreio; }
+>>>>>>> cc85b8d9e8047f09ba782373ee5397cd4b3cf4ab
 }
