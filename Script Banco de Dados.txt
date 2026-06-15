@@ -1,0 +1,163 @@
+-- =====================================================
+-- SCRIPT COMPLETO PARA POSTGRESQL (FUNCIONAL)
+-- =====================================================
+
+WITH cliente_inserido AS (
+    INSERT INTO clientes (
+        nome, 
+        cpf, 
+        email, 
+        senha, 
+        genero, 
+        data_nascimento, 
+        inativado
+    ) VALUES (
+        'João Silva Santos',
+        '123.456.789-00',
+        'joao.silva@email.com',
+        '$2a$10$N9qo8uLOickgx2ZMRZoMy.Mr/.cZQ5qZkQ5qZkQ5qZkQ5qZkQ5qZkQ',
+        'MASCULINO',
+        '1990-05-15',
+        false
+    )
+    RETURNING id
+), endereco_inserido AS (
+    INSERT INTO enderecos (
+        tipo_logradouro,
+        rua,
+        numero,
+        complemento,
+        bairro,
+        cidade,
+        uf,
+        cep,
+        observacoes,
+        apelido,
+        endereco_entrega,
+        endereco_cobranca,
+        cliente_id
+    )
+    SELECT 
+        'RUA',
+        'Das Flores',
+        '123',
+        'Apto 45',
+        'Jardim América',
+        'São Paulo',
+        'SP',
+        '01234-567',
+        'Entregar apenas em horário comercial',
+        'Casa',
+        true,
+        true,
+        id
+    FROM cliente_inserido
+    RETURNING id
+), telefone_inserido AS (
+    INSERT INTO telefones (
+        ddd,
+        tipo,
+        numero,
+        cliente_id
+    )
+    SELECT 
+        '11',
+        'CELULAR',
+        '98765-4321',
+        id
+    FROM cliente_inserido
+    UNION ALL
+    SELECT 
+        '11',
+        'FIXO',
+        '3456-7890',
+        id
+    FROM cliente_inserido
+    RETURNING id
+), cartao_inserido AS (
+    INSERT INTO cartoes_credito (
+        numero_cartao,
+        nome_impresso,
+        bandeira,
+        codigo_seguranca,
+        preferencial,
+        cliente_id
+    )
+    SELECT 
+        '4532-1234-5678-9012',
+        'JOAO S SILVA',
+        'VISA',
+        '123',
+        true,
+        id
+    FROM cliente_inserido
+    UNION ALL
+    SELECT 
+        '5555-6789-0123-4567',
+        'JOAO S SILVA',
+        'MASTERCARD',
+        '456',
+        false,
+        id
+    FROM cliente_inserido
+    RETURNING id
+), cupom_inserido AS (
+    INSERT INTO cupons (
+        codigo, 
+        tipo, 
+        valor, 
+        ativo, 
+        data_validade, 
+        descricao, 
+        quantidade_usos, 
+        maximo_usos, 
+        cliente_id
+    ) VALUES 
+    (
+        'PROMO10COMUM', 
+        'PROMOCIONAL', 
+        10.00, 
+        true, 
+        '2026-07-01 00:00:00', 
+        'Cupom promocional comum de R$ 10,00 de desconto', 
+        0, 
+        NULL, 
+        NULL
+    ),
+    (
+        'PROMO30COMUM', 
+        'PROMOCIONAL', 
+        30.00, 
+        true, 
+        '2026-07-01 00:00:00', 
+        'Cupom promocional comum de R$ 30,00 de desconto', 
+        0, 
+        NULL, 
+        NULL
+    )
+    RETURNING id
+)
+INSERT INTO produtos (
+    isbn, titulo, autor, editora, ano_publicacao, paginas, idioma, sinopse, 
+    preco, estoque, genero, sub_genero, peso, altura, largura, profundidade, 
+    url_capa, ativo, data_cadastro
+) VALUES 
+('978-85-508-0469-3','O Programador Pragmático: De Aprendiz a Mestre','David Thomas, Andrew Hunt','Alta Books',2019,352,'Português','O Programador Pragmático é uma verdadeira bíblia para programadores que desejam evoluir suas habilidades e se tornar profissionais mais completos e eficientes.',89.90,50,'Tecnologia','Programação',0.6,24,17,2,'https://images.example.com/programador-pragmatico.jpg',true,CURRENT_DATE),
+('978-85-7254-035-7','Código Limpo: Habilidades Práticas do Agile Software','Robert C. Martin','Alta Books',2019,425,'Português','Mesmo um código ruim pode funcionar. Mas se ele não for limpo, pode quebrar uma organização de desenvolvimento. Este livro mostra como escrever código limpo.',99.90,30,'Tecnologia','Programação',0.7,24,17,3,'https://images.example.com/codigo-limpo.jpg',true,CURRENT_DATE),
+('978-85-508-0349-8','Arquitetura Limpa: O Guia do Artesão para Estrutura e Design','Robert C. Martin','Alta Books',2018,378,'Português','As regras universais de arquitetura de software aumentam dramaticamente a produtividade dos desenvolvedores ao longo da vida dos sistemas.',109.90,20,'Tecnologia','Arquitetura',0.65,24,17,2.5,'https://images.example.com/arquitetura-limpa.jpg',true,CURRENT_DATE),
+('978-85-8041-049-3','O Poder do Hábito','Charles Duhigg','Objetiva',2012,408,'Português','Por que fazemos o que fazemos na vida e nos negócios? Este livro mostra a ciência por trás da formação de hábitos.',49.90,100,'Autoajuda','Desenvolvimento Pessoal',0.5,23,16,2,'https://images.example.com/poder-habito.jpg',true,CURRENT_DATE),
+('978-85-7684-878-1','1984','George Orwell','Companhia das Letras',2021,416,'Português','Um dos romances mais influentes do século XX, uma distopia que retrata um futuro totalitário onde o governo controla todos os aspectos da vida.',39.90,80,'Ficção','Distopia',0.4,21,14,2,'https://images.example.com/1984.jpg',true,CURRENT_DATE),
+('978-85-325-3062-2','Dom Casmurro','Machado de Assis','Record',2019,288,'Português','Um dos maiores clássicos da literatura brasileira, a história de Bentinho e Capitu, e a dúvida sobre a traição que se tornou um dos maiores enigmas literários.',29.90,60,'Literatura Brasileira','Romance',0.35,21,14,1.5,'https://images.example.com/dom-casmurro.jpg',true,CURRENT_DATE),
+('978-85-9504-036-8','A Guerra dos Tronos','George R.R. Martin','Suma',2019,592,'Português','Primeiro volume da série As Crônicas de Gelo e Fogo, que inspirou a série Game of Thrones. Uma épica história de poder, intriga e guerra.',59.90,45,'Fantasia','Épico',0.8,23,16,3,'https://images.example.com/guerra-tronos.jpg',true,CURRENT_DATE),
+('978-85-01-11476-7','O Pequeno Príncipe','Antoine de Saint-Exupéry','Agir',2015,96,'Português','Clássico da literatura mundial, um livro que encanta crianças e adultos com suas reflexões sobre amor, amizade e o sentido da vida.',24.90,150,'Infantojuvenil','Fábula',0.2,20,12,1,'https://images.example.com/pequeno-principe.jpg',true,CURRENT_DATE),
+('978-85-359-0277-6','O Nome do Vento','Patrick Rothfuss','Arqueiro',2019,656,'Português','A história de Kvothe, um jovem que se torna lendário por suas habilidades musicais, mágicas e de sobrevivência. Considerado um dos maiores épicos da fantasia moderna.',69.90,35,'Fantasia','Épico',0.9,23,16,4,'https://images.example.com/nome-do-vento.jpg',true,CURRENT_DATE),
+('978-85-9504-358-1','O Homem de Giz','C.J. Tudor','Intrínseca',2020,304,'Português','Um grupo de amigos, um segredo macabro e desenhos misteriosos que trazem à tona um passado sombrio. Um thriller psicológico que prende do início ao fim.',49.90,25,'Suspense','Thriller',0.5,23,16,2.5,'https://images.example.com/homem-de-giz.jpg',true,CURRENT_DATE),
+('978-85-510-1234-5','Sapiens: Uma Breve História da Humanidade','Yuval Noah Harari','L&PM Editores',2015,448,'Português','Uma narrativa envolvente sobre a história da humanidade, desde os primeiros Homo sapiens até os dias atuais.',74.90,40,'História','Antropologia',0.7,23,16,3,'https://images.example.com/sapiens.jpg',true,CURRENT_DATE),
+('978-85-510-5678-9','A Revolução dos Bichos','George Orwell','Companhia das Letras',2020,152,'Português','Uma fábula política que satiriza regimes totalitários, mostrando animais que se rebelam contra seus donos humanos.',34.90,70,'Ficção','Sátira',0.3,20,13,1.5,'https://images.example.com/revolucao-bichos.jpg',true,CURRENT_DATE),
+('978-85-510-9876-5','Mindset: A Nova Psicologia do Sucesso','Carol S. Dweck','Objetiva',2017,312,'Português','Explora como nossas crenças sobre nossas habilidades podem impactar profundamente o sucesso pessoal e profissional.',59.90,55,'Autoajuda','Psicologia',0.45,22,15,2,'https://images.example.com/mindset.jpg',true,CURRENT_DATE),
+('978-85-510-2468-3','A Menina que Roubava Livros','Markus Zusak','Intrínseca',2016,480,'Português','Narrado pela Morte, este romance conta a história de Liesel Meminger durante a Segunda Guerra Mundial.',54.90,40,'Ficção','Drama',0.6,23,15,2.5,'https://images.example.com/menina-roubava-livros.jpg',true,CURRENT_DATE),
+('978-85-510-3579-0','O Senhor dos Anéis: A Sociedade do Anel','J.R.R. Tolkien','HarperCollins Brasil',2019,576,'Português','Primeiro volume da trilogia épica que acompanha Frodo e seus companheiros na missão de destruir o Um Anel.',79.90,50,'Fantasia','Épico',0.85,24,17,3,'https://images.example.com/sociedade-anel.jpg',true,CURRENT_DATE),
+('978-85-510-4680-6','Harry Potter e a Pedra Filosofal','J.K. Rowling','Rocco',2017,264,'Português','Primeiro livro da saga Harry Potter, que apresenta o jovem bruxo e seu ingresso em Hogwarts.',44.90,120,'Fantasia','Juvenil',0.5,22,15,2,'https://images.example.com/harry-potter-pedra.jpg',true,CURRENT_DATE),
+('978-85-510-5791-9','A Culpa é das Estrelas','John Green','Intrínseca',2014,288,'Português','História emocionante de Hazel e Gus, dois adolescentes que enfrentam o câncer e descobrem o amor.',39.90,90,'Romance','Juvenil',0.4,21,14,2,'https://images.example.com/culpa-estrelas.jpg',true,CURRENT_DATE),
+('978-85-510-6802-1','O Alquimista','Paulo Coelho','HarperCollins Brasil',2018,208,'Português','A jornada de Santiago em busca de seu tesouro pessoal, um clássico da literatura contemporânea.',34.90,75,'Literatura Brasileira','Fábula',0.35,20,13,1.5,'https://images.example.com/o-alquimista.jpg',true,CURRENT_DATE),
+('978-85-510-7913-2','Pequenas Grandes Mentiras','Liane Moriarty','Intrínseca',2015,488,'Português','Um thriller psicológico envolvente que explora os segredos e mentiras de um grupo de mães em uma escola infantil.',49.90,60,'Suspense','Psicológico',0.55,23,16,2.5,'https://images.example.com/pequenas-mentiras.jpg',true,CURRENT_DATE);
